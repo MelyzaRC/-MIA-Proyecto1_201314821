@@ -1,0 +1,11 @@
+#inicio del archivo
+
+#Creacion del disco
+mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->disco1.disk        
+PAUSE               
+
+#Eliminacion del disco 
+rmDisk -path->"/home/melyza/Escritorio/mis discos/disco1.disk"
+PAUSE
+
+#fin del archivo
