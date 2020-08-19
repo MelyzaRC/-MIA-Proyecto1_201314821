@@ -23,6 +23,7 @@ import (
 	Lee una linea por medio de teclado
 ***************************************************************/
 func obtenerLineaConsola(texto string) {
+	fmt.Print("COMANDO: ")
 	lector := bufio.NewReader(os.Stdin)
 	comando, _ := lector.ReadString('\n')
 	comando = texto + comando
@@ -42,6 +43,7 @@ func obtenerLineaConsola(texto string) {
 			}
 		}
 	}
+	obtenerLineaConsola("")
 }
 
 /**************************************************************
@@ -119,7 +121,7 @@ func analizar(comando string) {
 		-	Path
 ***************************************************************/
 func comandoExec(comando string) {
-	fmt.Println("Ejecutando: " + comando)
+	fmt.Println("EJECUTANDO: " + comando)
 	s := strings.Split(comando, " -")
 	if len(s) == 2 {
 		s2 := strings.Split(s[1], "->")
@@ -128,23 +130,23 @@ func comandoExec(comando string) {
 			if err == nil {
 				s3 := strings.Split(s2[1], ".")
 				if strings.Compare(s3[1], "mia") == 0 {
-					fmt.Println("Resultado: Leyendo archivo...")
+					fmt.Println("RESULTADO: Leyendo archivo...")
 					fmt.Println("")
 					archivo := leerArchivo(s2[1])
 					//mandar a analizar ese archivo
 					analizarArchivo(archivo)
 				} else {
-					fmt.Println("Resultado: La extension del archivo debe ser .MIA")
+					fmt.Println("RESULTADO: La extension del archivo debe ser .MIA")
 				}
 			}
 			if os.IsNotExist(err) {
-				fmt.Println("Resultado: No existe el archivo especificado")
+				fmt.Println("RESULTADO: No existe el archivo especificado")
 			}
 		} else {
-			fmt.Println("Resultado: El parametro PATH es obligatorio")
+			fmt.Println("RESULTADO: El parametro PATH es obligatorio")
 		}
 	} else {
-		fmt.Println("Resultado: Demasiados parametros para el comando EXEC")
+		fmt.Println("RESULTADO: Demasiados parametros para el comando EXEC")
 	}
 }
 
@@ -226,9 +228,9 @@ func verificarLineaArchivo(comando string) (int, string) {
 	COMANDO PAUSE
 ***************************************************************/
 func comandoPause(comando string) {
-	fmt.Println("Comando PAUSE")
 	fmt.Print("Presione la tecla Enter para continuar...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
+	fmt.Println()
 }
 
 /**************************************************************
@@ -241,7 +243,7 @@ func comandoPause(comando string) {
 			-unit
 ***************************************************************/
 func comandoMkdisk(comando string) {
-	fmt.Println("Ejecutando: " + comando)
+	fmt.Println("EJECUTANDO: " + comando)
 	//Descomponiendo en atributos
 	atributos := strings.Split(comando, " -")
 	//verificando parametros
@@ -262,16 +264,16 @@ func comandoMkdisk(comando string) {
 			case "unit":
 				unit = atributoUnit(atributoActual[1])
 			default:
-				fmt.Println("Resultado: El atributo " + atributoActual[0] + " no se reconoce")
+				fmt.Println("RESULTADO: El atributo " + atributoActual[0] + " no se reconoce")
 			}
 		}
 		//verificando tamano
 		if size < 1 {
-			fmt.Println("Resultado: Error en el atributo SIZE")
+			fmt.Println("RESULTADO: Error en el atributo SIZE")
 		} else {
 			//verificando unidad
 			if strings.Compare(unit, "error") == 0 {
-				fmt.Println("Resultado: Error en el atributo UNIT")
+				fmt.Println("RESULTADO: Error en el atributo UNIT")
 			} else if strings.Compare(unit, "") == 0 {
 				unit = "m"
 			} else {
@@ -288,15 +290,15 @@ func comandoMkdisk(comando string) {
 				if strings.Compare(name, "") == 1 {
 					_, err := os.Stat(strings.ReplaceAll(path+"/"+name, "\"", ""))
 					if err == nil {
-						fmt.Println("Resultado: El disco ya se encuentra creado, cambie de nombre")
+						fmt.Println("RESULTADO: El disco ya se encuentra creado, cambie de nombre")
 						/*Esto lo tengo que quitar*/
 						sName := strings.Split(name, ".")
 						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
 							//Aqui mando a crear el archivo
 							crearDisco(size, unit, path+"/"+name)
-							fmt.Println("Resultado: Disco creado")
+							fmt.Println("RESULTADO: Disco creado")
 						} else {
-							fmt.Println("Resultado: Solo se pueden crear discos con extension .DISK")
+							fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DISK")
 						}
 						/*Esto lo tengo que quitar*/
 					} else {
@@ -306,19 +308,19 @@ func comandoMkdisk(comando string) {
 							if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
 								//Aqui mando a crear el archivo
 								crearDisco(size, unit, path+"/"+name)
-								fmt.Println("Resultado: Disco creado")
+								fmt.Println("RESULTADO: Disco creado")
 							} else {
-								fmt.Println("Resultado: Solo se pueden crear discos con extension .DISK")
+								fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DISK")
 							}
 						} else {
-							fmt.Println("Resultado: Error en el nombre del disco a crear")
+							fmt.Println("RESULTADO: Error en el nombre del disco a crear")
 						}
 					}
 				}
 			}
 		}
 	} else {
-		fmt.Println("Resultado: Faltan atributos obligatorios para el comando MKDISK")
+		fmt.Println("RESULTADO: Faltan atributos obligatorios para el comando MKDISK")
 	}
 }
 
@@ -334,9 +336,11 @@ func crearDirectorioSiNoExiste(directorio string) {
 
 /**************************************************************
 	COMANDO RMDISK
+	Obligatorio:
+		-path
 ***************************************************************/
 func comandoRmdisk(comando string) {
-	fmt.Println("Ejecutando: " + comando)
+	fmt.Println("EJECUTANDO: " + comando)
 	atributos := strings.Split(comando, " -")
 	if len(atributos) > 1 {
 		atributoActual := strings.Split(atributos[1], "->")
@@ -352,36 +356,165 @@ func comandoRmdisk(comando string) {
 						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
 							//Aqui mando a borrar el disco
 							removerDisco(pathActual)
-							fmt.Println("Resultado: Disco eliminado")
+							fmt.Println("RESULTADO: Disco eliminado")
 						} else {
-							fmt.Println("Resultado: Solo se pueden eliminar discos con extension .DISK")
+							fmt.Println("RESULTADO: Solo se pueden eliminar discos con extension .DISK")
 						}
-						/*Esto lo tengo que quitar*/
 					} else {
 						//no existe el archivo solicitado
-						fmt.Println("Resultado: No existe el disco a eliminar")
+						fmt.Println("RESULTADO: No existe el disco a eliminar")
 					}
 				}
 				/*******************/
 			}
 		}
 	} else {
-		fmt.Println("Resultado: Faltan atributos obligatorios para el comando RMDISK")
+		fmt.Println("RESULTADO: Faltan atributos obligatorios para el comando RMDISK")
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo.mia
-///exec -path->"/home/melyza/Escritorio/hola.jpg"
-//exec -path->"/home/mis discos/Disco Prueba/Disco1.mia"
-//mkdisk -SiZe->8 -pAth->”/home/mis discos/DISCO Prueba/” \*   #comentario
-//-name->Disco1.dsk -uniT->k
 /**************************************************************
 	COMANDO FKDISK
 ***************************************************************/
 func comandoFkdisk(comando string) {
-	fmt.Println("Comando FDISK")
+	if strings.Compare(comando, "") == 1 {
+		fmt.Println("EJECUTANDO: " + comando)
+		//Separa el primer comando general para determinar que accion realizar
+		s := strings.Split(comando, " -")
+		//verificar que hayan atributos
+		if len(s) > 1 {
+			//atributo s1 nos dice la accion
+			s1 := strings.Split(s[1], "->")
+			//verificar que exista
+			if len(s1) > 0 {
+				//switch para ver si es delete add o particion
+				switch strings.ToLower(s1[0]) {
+				case "add":
+					fmt.Println("Es un add")
+				case "delete":
+					fmt.Println("Es un DELETE")
+				default:
+					//si no es add ni delete puede que sea crear
+					fDiskCrear(comando)
+				}
+			}
+		}
+	}
 }
 
+func fDiskCrear(comando string) {
+
+	/********************************************
+		Para crear una particion
+		Obligatorios:
+			-size
+			-path
+			-name
+		Opcionales:
+			-unit
+			-type
+			-fit
+	*********************************************/
+
+	//comando para ver si es una creacion
+	if strings.Compare(comando, "") == 1 {
+		//separando el comando " -"
+		s := strings.Split(comando, " -")
+		//verificando que s exista
+		if len(s) > 0 {
+			//verificando que venga el numero de atributos obligatorios
+			atributosObligatorios := 3
+			if len(s) > atributosObligatorios {
+				//si cumple con los atributos obligatorios
+				//verificar cada uno de los atributos
+				size := 0
+				pathOk := 0
+				path := ""
+				name := ""
+				unit := "k"
+				tipo := "p"
+				fit := "wf"
+				for i := 1; i < len(s); i++ {
+					//dividiendo cada uno de los atributos en nombre y valor
+					atributo := strings.Split(s[i], "->")
+					//asegurando que atributo tenga unidades de informacion
+					if len(atributo) > 1 {
+						//verificando que atributo es
+						switch strings.ToLower(atributo[0]) {
+						case "size":
+							size = atributoSize(atributo[1])
+						case "path":
+							pathOk, path = verificarPath(atributo[1])
+						case "name":
+							name = atributo[1]
+						case "unit":
+							unit = atributoUnitParticion(atributo[1])
+						case "type":
+							tipo = atributoType(atributo[1])
+						case "fit":
+							fit = atributoFit(atributo[1])
+						default:
+							fmt.Println("ADVERTENCIA: No se reconoce el atributo " + atributo[0])
+						}
+					} else {
+						//si no tiene al menos dos unidades de informacion es un error
+						fmt.Println("RESULTADO: Error en atributos del comando FDISK, falta informacion")
+					}
+				}
+				//terminando el for para formar los atributos
+
+				/*fmt.Println(size)
+				fmt.Println(pathOk)
+				fmt.Println(path)
+				fmt.Println(name)
+				fmt.Println(unit)
+				fmt.Println(tipo)
+				fmt.Println(fit)*/
+
+				//verificando los parametros de creacion de la particion
+				//verificando el tamano
+				if size > 0 {
+					//verificando path
+					if pathOk == 0 {
+						fmt.Println("RESULTADO: No existe el archivo indicado")
+					} else if pathOk == 1 {
+						//verificar el nombre
+						if strings.Compare(name, "") == 1 {
+							//veriicando unidad de tamano
+							if strings.Compare(strings.ToLower(unit), "error") == 1 || strings.Compare(unit, "b") == 0 {
+								//verificando tipo
+								if strings.Compare(strings.ToLower(tipo), "error") == 1 || strings.Compare(tipo, "e") == 0 {
+									//verificando ajuste
+									if strings.Compare(strings.ToLower(fit), "error") == 1 || strings.Compare(fit, "bf") == 0 {
+										//mandar a crear la particion
+										crearParticion(path, size, unit, name, tipo, fit)
+									} else {
+										fmt.Println("RESULTADO: Error en ajuste de particion")
+									}
+								} else {
+									fmt.Println("RESULTADO: Error en el tipo de particion a crear")
+								}
+							} else {
+								fmt.Println("RESULTADO: Error en unidad de tamano de particion")
+							}
+						} else {
+							fmt.Println("RESULTADO: El nombre de la particion no puede estar vacio")
+						}
+					} else if pathOk == 2 {
+						fmt.Println("RESULTADO: El archivo indicado no representa un disco")
+					}
+				} else {
+					fmt.Println("RESULTADO: Error en tamano de particion")
+				}
+			} else {
+				//no cumple con los atributos obligatorios
+				fmt.Println("RESULTADO: Faltan atributos obligatorios para el comando FDISK")
+			}
+		}
+	}
+}
+
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo.mia
 /**************************************************************
 	COMANDO MOUNT
 ***************************************************************/
@@ -416,6 +549,7 @@ func atributoSize(cadena string) int {
 func validarRuta(cadena string) int {
 	return 0
 }
+
 func atributoUnit(cadena string) string {
 	if strings.Compare(cadena, "") == 1 {
 		switch strings.ToLower(cadena) {
@@ -428,4 +562,72 @@ func atributoUnit(cadena string) string {
 		}
 	}
 	return "error"
+}
+
+func atributoUnitParticion(cadena string) string {
+	if strings.Compare(cadena, "") == 1 {
+		switch strings.ToLower(cadena) {
+		case "k":
+			return "k"
+		case "m":
+			return "m"
+		case "b":
+			return "b"
+		default:
+			return "error"
+		}
+	}
+	return "error"
+}
+
+func atributoFit(cadena string) string {
+	if strings.Compare(cadena, "") == 1 {
+		switch strings.ToLower(strings.TrimSpace(cadena)) {
+		case "ff":
+			return "ff"
+		case "bf":
+			return "bf"
+		case "wf":
+			return "wf"
+		default:
+			return "Error"
+		}
+	}
+	return "Error"
+}
+
+func atributoType(cadena string) string {
+	if strings.Compare(cadena, "") == 1 {
+		switch strings.ToLower(strings.TrimSpace(cadena)) {
+		case "p":
+			return "p"
+		case "e":
+			return "e"
+		case "l":
+			return "l"
+		default:
+			return "error"
+		}
+	}
+	return "error"
+}
+
+func verificarPath(pathActual string) (int, string) {
+	pathActual = strings.ReplaceAll(pathActual, "\"", "")
+	if strings.Compare(pathActual, "") == 1 {
+		_, err := os.Stat(pathActual)
+		if err == nil {
+			sName := strings.Split(pathActual, ".")
+			if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
+				//Si existe el disco
+				return 1, pathActual
+			}
+			//Existe el archivo pero no es un disco
+			return 2, ""
+		}
+		//no existe el archivo
+		return 0, ""
+	}
+	//se envio un path vacio
+	return 0, ""
 }

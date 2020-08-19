@@ -1,11 +1,19 @@
 #inicio del archivo
 
-#Creacion del disco
-mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->disco1.disk        
-PAUSE               
+#Creacion del disco1
+mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoPrueba1.disk        
+PAUSE           
+
+#Creacion del disco2
+mkdisk -size->2048 -unit->k -path->"/home/melyza/Escritorio/mis discos" -name->discoPrueba2.disk        
+PAUSE  
 
 #Eliminacion del disco 
-rmDisk -path->"/home/melyza/Escritorio/mis discos/disco1.disk"
+rmDisk -path->"/home/melyza/Escritorio/mis discos/discoPrueba2.disk"
 PAUSE
+
+#Particionar un disco
+Fdisk -fit->bf -sizE->2 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion1
+PaUsE
 
 #fin del archivo
