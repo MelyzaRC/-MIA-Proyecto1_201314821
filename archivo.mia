@@ -12,8 +12,20 @@ PAUSE
 rmDisk -path->"/home/melyza/Escritorio/mis discos/discoPrueba2.disk"
 PAUSE
 
-#Particionar un disco
-Fdisk -fit->bf -sizE->2 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion1
+#Particion 1
+Fdisk -fit->bf -sizE->1 -unit->m -type->l -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion1
+PaUsE
+
+#Particion 2
+Fdisk -fit->bf -sizE->1024 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion2
+PaUsE
+
+#Particion 3
+Fdisk -fit->bf -sizE->1024 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion3
+PaUsE
+
+#Particion 4
+Fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoPrueba1.disk" -name->Particion4
 PaUsE
 
 #fin del archivo
