@@ -42,6 +42,12 @@ type particion struct {
 }
 
 type ebr struct {
+	Status byte
+	Fit    byte
+	Start  int64
+	Size   int64
+	Next   int64
+	Name   [16]byte
 }
 
 /**************************************************************
@@ -113,7 +119,27 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 			if res == 1 {
 				reordenarParticiones(disco)
 				reescribir(disco, path)
+				/*Si es extendida**************************************************/
+				if nueva.Type == 'e' {
+					ebrVacio := ebr{}
+					ebrVacio.Next = -1
+					ebrVacio.Size = 0
+					file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
+					defer file.Close()
+					if err != nil {
+						log.Fatal(err)
+					} else {
+						file.Seek(nueva.Start, 0)
+						//Escribiendo el MBR
+						var binario3 bytes.Buffer
+						binary.Write(&binario3, binary.BigEndian, ebrVacio)
+						writeNextBytes(file, binario3.Bytes())
+					}
+				}
+				/******************************************************************/
+				//fmt.Println(disco)
 				fmt.Println("RESULTADO: Particion creada con exito")
+				graficarMBR(path)
 			} /*else {
 				fmt.Println("RESULTADO: No se ha podido crear la particion")
 			}*/
@@ -134,7 +160,7 @@ func insertarParticion(disco *mbr, nueva *particion, path string) int {
 	var tabla = [4]particion{}
 	tabla = disco.Tabla
 	//verificar si se puede segun el tipo
-	libre, primaria, logica := 0, 0, 0
+	libre, primaria, extendida := 0, 0, 0
 	for i := 0; i < len(tabla); i++ {
 		if tabla[i].Size != 0 {
 			if tabla[i].Name == nueva.Name {
@@ -145,8 +171,8 @@ func insertarParticion(disco *mbr, nueva *particion, path string) int {
 		switch tabla[i].Type {
 		case 'p':
 			primaria++
-		case 'l':
-			logica++
+		case 'e':
+			extendida++
 		default:
 			libre++
 		}
@@ -156,25 +182,25 @@ func insertarParticion(disco *mbr, nueva *particion, path string) int {
 	//para que hayan extendidas tiene que haber una logica
 	//sumar 4
 
-	if libre == 4 && nueva.Type != 'e' {
+	if libre == 4 && nueva.Type != 'l' {
 		//no hay particiones creadas aun
 		nueva.Start = int64(unsafe.Sizeof(mbr{}))
 		disco.Tabla[0] = *nueva
 		return 1
-	} else if libre == 4 && nueva.Type == 'e' {
+	} else if libre == 4 && nueva.Type == 'l' {
 		//ya hay particiones
-		fmt.Print("RESULTADO: No se puede crear la particion extendida, debe crear una particion logica")
+		fmt.Print("RESULTADO: No se puede crear la particion logica, debe crear una particion extendida")
 		return 0
-	} else if libre == 0 && nueva.Type != 'e' {
-		fmt.Println("RESULTADO: No se pueden crear mas particiones primarias ni logicas")
+	} else if libre == 0 && nueva.Type != 'l' {
+		fmt.Println("RESULTADO: No se pueden crear mas particiones primarias ni extendidas")
 		return 0
-	} else if logica > 0 && nueva.Type == 'e' {
-		return creacionE(disco, nueva, path) //aqui que retorne lo que retorna el otro metodo que tengo que crear
-	} else if nueva.Type == 'l' && logica > 0 && libre > 0 {
-		fmt.Println("RESULTADO: Solamente se puede crear una particion logica")
+	} else if extendida > 0 && nueva.Type == 'l' {
+		return creacionL(disco, nueva, path) //aqui que retorne lo que retorna el otro metodo que tengo que crear
+	} else if nueva.Type == 'e' && extendida > 0 && libre > 0 {
+		fmt.Println("RESULTADO: Solamente se puede crear una particion extendida")
 		return 0
-	} else if libre > 0 && nueva.Type != 'e' {
-		return creacionPL(disco, nueva, path)
+	} else if libre > 0 && nueva.Type != 'l' {
+		return creacionPE(disco, nueva, path)
 	}
 	return 0
 }
@@ -182,7 +208,7 @@ func insertarParticion(disco *mbr, nueva *particion, path string) int {
 //tomando en cuenta que el arreglo de particiones esta en orden de part_start
 
 //para particiones logicas y primarias
-func creacionPL(disco *mbr, nueva *particion, path string) int {
+func creacionPE(disco *mbr, nueva *particion, path string) int {
 	var inicioEspacio int64 = int64(unsafe.Sizeof(mbr{}))
 	ingresoOk := 0
 	var finalAnterior int64 = inicioEspacio
@@ -228,9 +254,147 @@ func creacionPL(disco *mbr, nueva *particion, path string) int {
 }
 
 //para particiones extendidas
-func creacionE(disco *mbr, nueva *particion, path string) int {
-	fmt.Println("Metodo extendida")
+//ya se verifico que si hay una particion logica
+func creacionL(disco *mbr, nueva *particion, path string) int {
+	//encontrando la particion logica
+	enc := 0
+	for i := 0; i < len(disco.Tabla); i++ {
+		if enc == 0 {
+			if disco.Tabla[i].Type == 'e' {
+				enc = 1
+				//se encontro la particion extendida
+				//verificar si el tamano alcanza
+				if nueva.Size <= disco.Tabla[i].Size-int64(unsafe.Sizeof(ebr{})) {
+					//alcanza el tamano
+					//leer el ebr inicial
+					nextEBR, sizeEbr := leerEbr(path, disco.Tabla[i].Start, nueva)
+					if nextEBR == -1 && sizeEbr == 0 {
+						ebrEs := ebr{}
+						ebrEs.Fit = nueva.Fit
+						ebrEs.Name = nueva.Name
+						ebrEs.Next = -1
+						ebrEs.Size = nueva.Size
+						ebrEs.Start = disco.Tabla[i].Start
+						ebrEs.Status = 0
+						escribirEbr(path, ebrEs.Start, &ebrEs)
+						return 1
+						//significa que la particion esta vacia
+					} else {
+						//hay particiones logicas ya registradas
+						ebrEs := ebr{}
+						ebrEs.Fit = nueva.Fit
+						ebrEs.Name = nueva.Name
+						ebrEs.Next = -1
+						ebrEs.Size = nueva.Size
+						ebrEs.Start = disco.Tabla[i].Start
+						ebrEs.Status = 0
+						return logicaRecursiva(path, disco.Tabla[i].Start, &ebrEs, disco.Tabla[i].Size)
+					}
+				} else {
+					//no alcanza el tamano
+					fmt.Println("RESULTADO: La particion logica excede el tamano de la particion extendida")
+					return 0
+				}
+			}
+		}
+	}
 	return 0
+}
+
+func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
+	ebrTemp := ebr{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	file.Seek(int64(pos), 0)
+	data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0
+	}
+	if ebrTemp.Next == -1 {
+		//es el ultimo ebr
+		//no puede ser el primero porque ya se valido antes
+		disponible := limite - ebrTemp.Size - int64(unsafe.Sizeof(ebr{}))
+		if disponible >= ebrNuevo.Size {
+			ebrEs := ebr{}
+			ebrEs.Fit = ebrNuevo.Fit
+			ebrEs.Name = ebrNuevo.Name
+			ebrEs.Next = -1
+			ebrEs.Size = ebrNuevo.Size
+			ebrEs.Start = ebrNuevo.Start
+			ebrEs.Status = 0
+
+			ebrTemp.Next = ebrEs.Start
+
+			escribirEbr(path, ebrEs.Start, &ebrEs)
+			escribirEbr(path, ebrTemp.Start, &ebrTemp)
+			return 1
+		}
+		//si no alcanza el tamao sale de aca
+		fmt.Println("RESULTADO: Espacio insuficiente para crear la particion logica")
+		return 0
+	} else {
+		//no es el ultimo ebr
+		disponible := ebrTemp.Size - int64(unsafe.Sizeof(ebr{}))
+		if disponible >= ebrNuevo.Size {
+			ebrEs := ebr{}
+			ebrEs.Fit = ebrNuevo.Fit
+			ebrEs.Name = ebrNuevo.Name
+			ebrEs.Next = -1
+			ebrEs.Size = ebrNuevo.Size
+			ebrEs.Start = ebrNuevo.Start
+			ebrEs.Status = 0
+
+			ebrTemp.Next = ebrEs.Start
+
+			escribirEbr(path, ebrEs.Start, &ebrEs)
+			escribirEbr(path, ebrTemp.Start, &ebrTemp)
+			return 1
+		}
+		//si no alcanza el tamao sale de aca
+
+		return logicaRecursiva(path, ebrTemp.Next, ebrNuevo, limite)
+	}
+}
+
+func escribirEbr(path string, pos int64, ebr *ebr) {
+	file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		file.Seek(pos, 0)
+		//Escribiendo el MBR
+		var binario3 bytes.Buffer
+		binary.Write(&binario3, binary.BigEndian, ebr)
+		writeNextBytes(file, binario3.Bytes())
+	}
+}
+
+func leerEbr(path string, pos int64, particion *particion) (int64, int64) {
+	ebrTemp := ebr{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		file.Seek(int64(pos), 0)
+		data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+		buffer := bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+		if err != nil {
+			log.Fatal("binary.Read failed", err)
+			return 0, 0
+		}
+		return ebrTemp.Next, ebrTemp.Size
+	}
+	return 0, 0
 }
 
 //ordena la tabla de particiones del mbr de menor a mayor
@@ -249,33 +413,17 @@ func reordenarParticiones(disco *mbr) {
 
 //reescribe el disco con las actualizaciones
 func reescribir(disco *mbr, path string) {
-	archivo, err := os.Create(path)
-	defer archivo.Close()
+	file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		file.Seek(0, 0)
+		//Escribiendo el MBR
+		var binario3 bytes.Buffer
+		binary.Write(&binario3, binary.BigEndian, disco)
+		writeNextBytes(file, binario3.Bytes())
 	}
-	var vacio int8 = 0
-	s := &vacio
-
-	var binario bytes.Buffer
-	binary.Write(&binario, binary.BigEndian, s)
-	writeNextBytes(archivo, binario.Bytes())
-
-	//situando el cursor en la ultima posicion
-	archivo.Seek(disco.Tamano-1, 0)
-
-	//colocando el ultimo byte para rellenar
-	var binario2 bytes.Buffer
-	binary.Write(&binario2, binary.BigEndian, s)
-	writeNextBytes(archivo, binario2.Bytes())
-
-	//Regresando el cursor a 0 para escribir el mbr
-	archivo.Seek(0, 0)
-	//Escribiendo el MBR
-	var binario3 bytes.Buffer
-	binary.Write(&binario3, binary.BigEndian, disco)
-	writeNextBytes(archivo, binario3.Bytes())
-
 }
 
 /**************************************************************

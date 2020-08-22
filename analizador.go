@@ -514,7 +514,7 @@ func fDiskCrear(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo.mia
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia
 /**************************************************************
 	COMANDO MOUNT
 ***************************************************************/
