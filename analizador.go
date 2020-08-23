@@ -328,8 +328,7 @@ func crearDirectorioSiNoExiste(directorio string) {
 	if _, err := os.Stat(directorio); os.IsNotExist(err) {
 		err = os.MkdirAll(directorio, 0777)
 		if err != nil {
-			// Aquí puedes manejar mejor el error, es un ejemplo
-			panic(err)
+			//manejar el error aqui
 		}
 	}
 }
@@ -378,30 +377,95 @@ func comandoRmdisk(comando string) {
 ***************************************************************/
 func comandoFkdisk(comando string) {
 	if strings.Compare(comando, "") == 1 {
+		deleteFlag, addFlag := 0, 0
 		fmt.Println("EJECUTANDO: " + comando)
 		//Separa el primer comando general para determinar que accion realizar
 		s := strings.Split(comando, " -")
 		//verificar que hayan atributos
 		if len(s) > 1 {
-			//atributo s1 nos dice la accion
-			s1 := strings.Split(s[1], "->")
-			//verificar que exista
-			if len(s1) > 0 {
-				//switch para ver si es delete add o particion
-				switch strings.ToLower(s1[0]) {
-				case "add":
-					fmt.Println("Es un add")
-				case "delete":
-					fmt.Println("Es un DELETE")
-				default:
-					//si no es add ni delete puede que sea crear
-					fDiskCrear(comando)
+			for i := 0; i < len(s); i++ {
+				s1 := strings.Split(s[i], "->")
+				if len(s1) > 0 {
+					if strings.Compare(strings.ToLower(s1[0]), "add") == 0 {
+						addFlag = 1
+					} else if strings.Compare(strings.ToLower(s1[0]), "delete") == 0 {
+						deleteFlag = 1
+					}
 				}
+			}
+			if deleteFlag > 0 && addFlag > 0 {
+				fmt.Println("RESULTADO: Existe una combinacion de instrucciones delete y add en el mismo comando FDISK")
+			} else if deleteFlag > 0 {
+				fDiskEliminar(comando)
+			} else if addFlag > 0 {
+				fmt.Println("Es un add")
+			} else {
+				//si no es add ni delete puede que sea crear
+				fDiskCrear(comando)
 			}
 		}
 	}
 }
 
+/**************************************************************
+	ELIMINAR PARTICION
+	Obligatorios
+	-name
+	-path
+	-tipo de eliminacion, va con el comando
+***************************************************************/
+func fDiskEliminar(comando string) {
+	//verifico que el comando exista
+	if strings.Compare(comando, "") != 0 {
+		tipoEliminacion := ""
+		nombreEliminacion := ""
+		pathEliminacion := ""
+		pathOk := 0
+		s := strings.Split(comando, " -")
+		if len(s) > 3 {
+			for i := 1; i < len(s); i++ {
+				s1 := strings.Split(s[i], "->")
+				if len(s1) > 1 {
+					switch strings.ToLower(strings.TrimSpace(s1[0])) {
+					case "delete":
+						tipoEliminacion = atributoDelete(s1[1])
+					case "name":
+						nombreEliminacion = strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))
+					case "path":
+						pathOk, pathEliminacion = verificarPath(s1[1])
+					default:
+						fmt.Println("RESULTADO: El atributo " + s1[0] + " no se reconoce para el comando DELETE")
+					}
+				}
+			}
+			if pathOk == 1 {
+				//si existe el path
+				if strings.Compare(tipoEliminacion, "error") != 0 {
+					//si esta bien el tipo de eliminacion
+					if strings.Compare(nombreEliminacion, "") != 0 {
+						//si esta bien el nombre de la particion
+						eliminarParticion(pathEliminacion, nombreEliminacion, tipoEliminacion)
+					} else {
+						fmt.Println("RESULTADO: Debe ingresar el nombre de la particion a eliminar")
+					}
+				} else {
+					fmt.Println("RESULTADO: Error en el tipo de eliminacion de la particion")
+				}
+			} else if pathOk == 2 {
+				fmt.Println("RESULTADO: El archivo indicado no representa un disco")
+			} else {
+				fmt.Println("RESULTADO: No existe el archivo especificado")
+			}
+		} else {
+			fmt.Println("RESULTADO: Faltan atributos obligatorios para el comando FDISK DELETE")
+		}
+	}
+}
+
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia
+/**************************************************************
+	CREAR PARTICION
+***************************************************************/
 func fDiskCrear(comando string) {
 
 	/********************************************
@@ -514,7 +578,10 @@ func fDiskCrear(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia
+/**************************************************************
+	MODIFICAR TAMANO PARTICION
+***************************************************************/
+
 /**************************************************************
 	COMANDO MOUNT
 ***************************************************************/
@@ -543,10 +610,6 @@ func atributoSize(cadena string) int {
 		}
 		return i
 	}
-	return 0
-}
-
-func validarRuta(cadena string) int {
 	return 0
 }
 
@@ -630,4 +693,18 @@ func verificarPath(pathActual string) (int, string) {
 	}
 	//se envio un path vacio
 	return 0, ""
+}
+
+func atributoDelete(cadena string) string {
+	if strings.Compare(cadena, "") == 0 {
+		return "error"
+	}
+	switch strings.ToLower(strings.TrimSpace(strings.ReplaceAll(cadena, "\"", ""))) {
+	case "fast":
+		return "fast"
+	case "full":
+		return "full"
+	default:
+		return "error"
+	}
 }

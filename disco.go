@@ -552,11 +552,68 @@ func writeNextBytes(file *os.File, bytes []byte) {
 
 /**************************************************************
 	Eliminar disco
+	-Ya se valido que existe y que es un disco
 ***************************************************************/
 func removerDisco(path string) {
-	// borrar el archivo archivoBorrable.txt
+	// borrar el archivo
 	err := os.Remove(path)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+/**************************************************************
+	Eliminar particion
+***************************************************************/
+func eliminarParticion(path string, nombre string, tipo string) {
+	s := leerDisco(path)
+	var nombreComparar [16]byte
+	copy(nombreComparar[:], nombre)
+	eliminado := 0
+	if s != nil {
+		for i := 0; i < len(s.Tabla); i++ {
+			//recorriendo las particiones
+			if nombreComparar == s.Tabla[i].Name {
+				//encontro la particion entre las primarias y extendidas
+				if strings.Compare(tipo, "fast") == 0 {
+					particionVacia := particion{}
+					s.Tabla[i] = particionVacia
+					reescribir(s, path)
+					graficarMBR(path)
+				} else if strings.Compare(tipo, "full") == 0 {
+					borrarFullParticion(path, s.Tabla[i].Start, s.Tabla[i].Size)
+					particionVacia := particion{}
+					s.Tabla[i] = particionVacia
+					reescribir(s, path)
+					graficarMBR(path)
+				}
+				eliminado = 1
+
+			} else if s.Tabla[i].Type == 'e' {
+				/*Verificar las logicas dentro de la particion extendida*/
+				fmt.Println("Entrar para verificar las logicas")
+			}
+		}
+		if eliminado == 1 {
+			fmt.Println("RESULTADO: Se ha eliminado correctamente la particion")
+		} else {
+			fmt.Println("RESULTADO: No se ha podido eliminar la particion")
+		}
+	}
+}
+
+func borrarFullParticion(path string, inicio int64, tam int64) {
+	archivo, err := os.Create(path)
+	defer archivo.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var vacio int8 = 0
+	s := &vacio
+	for i := inicio; i < inicio+tam; i++ {
+		archivo.Seek(i, 0)
+		var binario bytes.Buffer
+		binary.Write(&binario, binary.BigEndian, s)
+		writeNextBytes(archivo, binario.Bytes())
 	}
 }

@@ -1,0 +1,26 @@
+#Archivo 3 
+#Creacion del disco
+mkdisk -size->1 -unit->k -path->"/home/melyza/Escritorio/mis discos" -name->discoEspacios.disk        
+PAUSE
+
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->325 -unit->b -type->p -path->"/home/melyza/Escritorio/mis discos/discoEspacios.disk" -name->Particion1
+PaUsE
+
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->325 -unit->b -type->p -path->"/home/melyza/Escritorio/mis discos/discoEspacios.disk" -name->Particion2
+PaUsE
+
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->325 -unit->b -type->p -path->"/home/melyza/Escritorio/mis discos/discoEspacios.disk" -name->Particion3
+PaUsE
+
+#Borrar la particion anterior
+fdisk -name->"Particion1" -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoEspacios.disk"
+pause 
+
+#Borrar la particion anterior
+fdisk -name->"Particion2" -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoEspacios.disk"
+pause 
+
+#fin del archivo 3
