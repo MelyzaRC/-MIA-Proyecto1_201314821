@@ -24,11 +24,12 @@ import (
 /**************************************************************
 	Colores
 ***************************************************************/
-//MBR 						#C0ECEB
-//Particion Primaria		#F5AFDC
-//Particion Logica			#A9FA52
+//MBR 						#A3E4D7
+//Particion Primaria		#D7BDE2
+
+//Particion Extendida		#1E8449
 //EBR						#4B8DF1
-//Particion Extendida		#FCCA43
+//Particion Logica			#D68910
 //Espacio Libre				#FFFFFF
 //Fondo de tabla			#FEFDBD
 /**************************************************************
@@ -45,94 +46,100 @@ func graficarMBR(path string) {
 	var finalAnterior int64 = inicioEspacio
 	if disco != nil {
 		//colocar el MBR
-		contenido = contenido + "<TD border=\"1\" bgcolor=\"#C0ECEB\"><b>MBR</b></TD>\n"
+		contenido = contenido + "<TD border=\"1\" bgcolor=\"#F7DC6F\"><b>MBR</b></TD>\n"
 		//formar el contenido
 
 		//determinando el part_start
 		for i := 0; i < 4; i++ {
 			if disco.Tabla[i].Size > 0 {
 				if disco.Tabla[i].Start-finalAnterior > 1 {
-					contenido = contenido + "<TD border=\"1\"  bgcolor=\"#FFFFFF \"><b>Libre</b></TD>\n"
-					switch disco.Tabla[i].Type {
-					case 'p':
-						contenido = contenido + "<TD border=\"1\"  bgcolor=\"#F5AFDC\"><b>Primaria</b></TD>\n"
-					case 'e':
-						//aqui graficar las logicas
-						contenido = contenido + "<TD border=\"1\"  bgcolor=\"#A9FA52\" cellpadding=\"5\">"
-						/*Grafica de la parte logica****************************/
-						ebrTemp := ebr{}
-						file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
-						defer file.Close()
-						if err != nil {
-							log.Fatal(err)
-						} else {
-							file.Seek(0, int(disco.Tabla[i].Start))
-							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
-							buffer := bytes.NewBuffer(data)
-							err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
-							if err != nil {
-								log.Fatal("binary.Read failed", err)
-							}
-						}
-						if ebrTemp.Next == -1 && ebrTemp.Size == 0 {
-
-							contenido = contenido + "<TABLE border=\"1\" cellspacing=\"0\" cellpadding=\"30\" bgcolor=\"yellow\">\n" +
-								"<TR>\n" +
-								"<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
-								"<TD border=\"1\"  bgcolor=\"#FFFFFF\"><b>Libre</b></TD>\n" +
-								"</TR>\n" +
-								"</TABLE>\n"
-						} else {
-							//Aqui graficar los demas ebr
-						}
-						/*******************************************************/
-						contenido = contenido + "</TD>\n"
-					}
-					finalAnterior = disco.Tabla[i].Start + disco.Tabla[i].Size - 1
-				} else {
-					switch disco.Tabla[i].Type {
-					case 'p':
-						contenido = contenido + "<TD border=\"1\"  bgcolor=\"#F5AFDC\"><b>Primaria</b></TD>\n"
-					case 'e':
-						//aqui graficar las logicas
-						contenido = contenido + "<TD border=\"1\"  bgcolor=\"#A9FA52\" cellpadding=\"5\">"
-						/*Grafica de la parte logica****************************/
-						ebrTemp := ebr{}
-						file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
-						defer file.Close()
-						if err != nil {
-							log.Fatal(err)
-						} else {
-							file.Seek(0, 0)
-							file.Seek(int64(disco.Tabla[i].Start), 0)
-							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
-							buffer := bytes.NewBuffer(data)
-							err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
-							if err != nil {
-								log.Fatal("binary.Read failed", err)
-							}
-						}
-						if ebrTemp.Next == -1 && ebrTemp.Size == 0 {
-							contenido = contenido + "<TABLE border=\"1\" cellspacing=\"0\" cellpadding=\"30\" bgcolor=\"yellow\">\n" +
-								"<TR>\n" +
-								"<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
-								"<TD border=\"1\"  bgcolor=\"#FFFFFF\"><b>Libre</b></TD>\n" +
-								"</TR>\n" +
-								"</TABLE>\n"
-						} else {
-							//Aqui graficar los demas ebr
-						}
-						/*******************************************************/
-						contenido = contenido + "</TD>\n"
-					}
-					finalAnterior = disco.Tabla[i].Start + disco.Tabla[i].Size - 1
+					contenido = contenido + "<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
 				}
+				switch disco.Tabla[i].Type {
+				case 'p':
+					contenido = contenido + "<TD border=\"1\"  bgcolor=\"#D7BDE2\"><b>Primaria</b></TD>\n"
+				case 'e':
+					contenido = contenido + "<TD border=\"1\"  bgcolor=\"#2ECC71\" cellpadding=\"5\">\n"
+					//aqui graficar las logicas************************************
+					contenido = contenido + "<TABLE border=\"1\" cellspacing=\"0\" cellpadding=\"5\" bgcolor=\"black\">\n" +
+						"<TR>\n"
+
+					//leyendo el archivo
+					ebrTemp := ebr{}
+					file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+					defer file.Close()
+					if err != nil {
+						log.Fatal(err)
+					}
+					file.Seek(disco.Tabla[i].Start, 0)
+					data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+					buffer := bytes.NewBuffer(data)
+					err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+					if err != nil {
+						log.Fatal("binary.Read failed", err)
+					}
+					limite := disco.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + disco.Tabla[i].Size
+					if &ebrTemp != nil {
+						for i := ebrTemp.Start; i < limite; i++ {
+							ebrLeido := ebr{}
+							file.Seek(i, 0)
+							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+							buffer := bytes.NewBuffer(data)
+							err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+							if err != nil {
+								log.Fatal("binary.Read failed", err)
+							}
+							if &ebrLeido != nil {
+
+								if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+									contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+										"<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
+									i = limite + 1
+								} else if ebrLeido.Next == -1 { //lego al utimo ebr
+									disponible := limite - ebrLeido.Start - ebrLeido.Size - int64(unsafe.Sizeof(ebr{}))
+									if disponible > 0 {
+										contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#D68910\"><b>Logica</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
+										i = limite + 1
+									} else {
+										contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#D68910\"><b>Logica</b></TD>\n"
+										i = limite + 1
+									}
+								} else if ebrLeido.Next != -1 { //esta en los ebr antes del ultimo
+									//verificar pero con el next
+									disponible := ebrLeido.Next - ebrLeido.Start - ebrLeido.Size - int64(unsafe.Sizeof(ebr{}))
+									if disponible > 0 {
+										contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#D68910\"><b>Logica</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
+									} else {
+										contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+											"<TD border=\"1\"  bgcolor=\"#D68910\"><b>Logica</b></TD>\n"
+									}
+									//porque al iterar el for le suma uno
+									i = ebrLeido.Next - 1
+								}
+
+							}
+
+						}
+					}
+					//lo que voy copiando
+					contenido = contenido + "</TR>\n" +
+						"</TABLE>\n"
+					//aqui graficar las logicas fin********************************
+
+					contenido = contenido + "</TD>\n"
+				}
+				finalAnterior = disco.Tabla[i].Start + disco.Tabla[i].Size - 1
 			}
 		}
 
 	}
 	if disco.Tamano-finalAnterior > 1 {
-		contenido = contenido + "<TD border=\"1\"  bgcolor=\"#FFFFFF \"><b>Libre</b></TD>\n"
+		contenido = contenido + "<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
 	}
 	contenido = contenido + "</TR>\n" +
 		"</TABLE>\n" +

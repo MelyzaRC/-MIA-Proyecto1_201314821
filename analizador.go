@@ -374,7 +374,7 @@ func comandoRmdisk(comando string) {
 }
 
 /**************************************************************
-	COMANDO FKDISK
+	COMANDO FDISK
 ***************************************************************/
 func comandoFkdisk(comando string) {
 	if strings.Compare(comando, "") == 1 {

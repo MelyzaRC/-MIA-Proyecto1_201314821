@@ -122,6 +122,7 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 				/*Si es extendida**************************************************/
 				if nueva.Type == 'e' {
 					ebrVacio := ebr{}
+					ebrVacio.Start = nueva.Start
 					ebrVacio.Next = -1
 					ebrVacio.Size = 0
 					file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
@@ -257,51 +258,31 @@ func creacionPE(disco *mbr, nueva *particion, path string) int {
 //ya se verifico que si hay una particion logica
 func creacionL(disco *mbr, nueva *particion, path string) int {
 	//encontrando la particion logica
-	enc := 0
+	//este for recorre la tabla de particiones del disco en busca de una extendida
 	for i := 0; i < len(disco.Tabla); i++ {
-		if enc == 0 {
-			if disco.Tabla[i].Type == 'e' {
-				enc = 1
-				//se encontro la particion extendida
-				//verificar si el tamano alcanza
-				if nueva.Size <= disco.Tabla[i].Size-int64(unsafe.Sizeof(ebr{})) {
-					//alcanza el tamano
-					//leer el ebr inicial
-					nextEBR, sizeEbr := leerEbr(path, disco.Tabla[i].Start, nueva)
-					if nextEBR == -1 && sizeEbr == 0 {
-						ebrEs := ebr{}
-						ebrEs.Fit = nueva.Fit
-						ebrEs.Name = nueva.Name
-						ebrEs.Next = -1
-						ebrEs.Size = nueva.Size
-						ebrEs.Start = disco.Tabla[i].Start
-						ebrEs.Status = 0
-						escribirEbr(path, ebrEs.Start, &ebrEs)
-						return 1
-						//significa que la particion esta vacia
-					} else {
-						//hay particiones logicas ya registradas
-						ebrEs := ebr{}
-						ebrEs.Fit = nueva.Fit
-						ebrEs.Name = nueva.Name
-						ebrEs.Next = -1
-						ebrEs.Size = nueva.Size
-						ebrEs.Start = disco.Tabla[i].Start
-						ebrEs.Status = 0
-						return logicaRecursiva(path, disco.Tabla[i].Start, &ebrEs, disco.Tabla[i].Size)
-					}
-				} else {
-					//no alcanza el tamano
-					fmt.Println("RESULTADO: La particion logica excede el tamano de la particion extendida")
-					return 0
-				}
+		if disco.Tabla[i].Type == 'e' {
+			if disco.Tabla[i].Name == nueva.Name {
+				fmt.Println("RESULTADO: Nombre de particion logica repetido")
+				return 0
 			}
+			ebrEs := ebr{}
+			ebrEs.Fit = nueva.Fit
+			ebrEs.Name = nueva.Name
+			ebrEs.Next = 0
+			ebrEs.Size = nueva.Size
+			ebrEs.Start = disco.Tabla[i].Start
+			ebrEs.Status = 0
+
+			return logicaRecursiva(path, disco.Tabla[i].Start, &ebrEs, disco.Tabla[i].Start+disco.Tabla[i].Size)
 		}
 	}
+	//no encontro ninguna particion extendida
+	fmt.Println("RESULTADO: No se encontro ninguna particion extendida creada")
 	return 0
 }
 
 func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
+	//leyendo el archivo
 	ebrTemp := ebr{}
 	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
 	defer file.Close()
@@ -317,50 +298,90 @@ func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
 		log.Fatal("binary.Read failed", err)
 		return 0
 	}
-	if ebrTemp.Next == -1 {
-		//es el ultimo ebr
-		//no puede ser el primero porque ya se valido antes
-		disponible := limite - ebrTemp.Size - int64(unsafe.Sizeof(ebr{}))
-		if disponible >= ebrNuevo.Size {
-			ebrEs := ebr{}
-			ebrEs.Fit = ebrNuevo.Fit
-			ebrEs.Name = ebrNuevo.Name
-			ebrEs.Next = -1
-			ebrEs.Size = ebrNuevo.Size
-			ebrEs.Start = ebrNuevo.Start
-			ebrEs.Status = 0
+	if &ebrTemp != nil {
+		for i := ebrTemp.Start; i < limite; i++ {
+			ebrLeido := ebr{}
+			file.Seek(i, 0)
+			data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+			buffer := bytes.NewBuffer(data)
+			err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+			if err != nil {
+				log.Fatal("binary.Read failed", err)
+				return 0
+			}
+			if &ebrLeido != nil {
+				if ebrLeido.Name == ebrNuevo.Name {
+					fmt.Println("RESULTADO: El nombre de la particion logica esta repetido")
+					return 0
+				}
+				if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+					//quiere decir que esta vacio
+					disponible := limite - int64(unsafe.Sizeof(ebr{}))
+					if disponible >= ebrNuevo.Size {
+						ebrLeido.Fit = ebrNuevo.Fit
+						ebrLeido.Name = ebrNuevo.Name
+						ebrLeido.Size = ebrNuevo.Size
+						ebrLeido.Status = 0
+						ebrLeido.Next = -1
+						escribirEbr(path, ebrLeido.Start, &ebrLeido)
+						fmt.Print("EBR start: ")
+						fmt.Println(ebrLeido.Start)
+						return 1
+					}
+					fmt.Println("RESULTADO: no hay espacio disponible para crear la particion logica en esta particion")
+					return 0
+				}
+				if ebrLeido.Next == -1 { //lego al utimo ebr
+					disponible := limite - int64(unsafe.Sizeof(ebr{}))
+					if disponible >= ebrNuevo.Size {
+						ebrEs := ebr{}
+						ebrEs.Fit = ebrNuevo.Fit
+						ebrEs.Name = ebrNuevo.Name
+						ebrEs.Next = -1
+						ebrEs.Size = ebrNuevo.Size
+						ebrEs.Start = ebrLeido.Start + int64(unsafe.Sizeof(ebr{})) + ebrLeido.Size
+						ebrEs.Status = 0
 
-			ebrTemp.Next = ebrEs.Start
+						ebrLeido.Next = ebrEs.Start
 
-			escribirEbr(path, ebrEs.Start, &ebrEs)
-			escribirEbr(path, ebrTemp.Start, &ebrTemp)
-			return 1
+						escribirEbr(path, ebrEs.Start, &ebrEs)
+						escribirEbr(path, ebrLeido.Start, &ebrLeido)
+						fmt.Print("EBR Start:")
+						fmt.Println(ebrEs.Start)
+						return 1
+					}
+					fmt.Println("RESULTADO: no hay espacio disponible para crear la particion logica en esta particion")
+					return 0
+				} else if ebrLeido.Next != -1 { //esta en los ebr antes del ultimo
+					disponible := ebrLeido.Next - int64(unsafe.Sizeof(ebr{})) - ebrLeido.Size - ebrLeido.Start
+					if disponible >= ebrNuevo.Size {
+						ebrEs := ebr{}
+						ebrEs.Fit = ebrNuevo.Fit
+						ebrEs.Name = ebrNuevo.Name
+						ebrEs.Next = ebrLeido.Next
+						ebrEs.Size = ebrNuevo.Size
+						ebrEs.Start = ebrLeido.Start + int64(unsafe.Sizeof(ebr{})) + ebrLeido.Size
+						ebrEs.Status = 0
+
+						ebrLeido.Next = ebrEs.Start
+
+						escribirEbr(path, ebrEs.Start, &ebrEs)
+						escribirEbr(path, ebrLeido.Start, &ebrLeido)
+						fmt.Print("EBR Star: ")
+						fmt.Println(ebrEs.Start)
+						return 1
+					}
+					//porque al iterar el for le suma uno
+					i = ebrLeido.Next - 1
+				}
+
+			}
+
 		}
-		//si no alcanza el tamao sale de aca
-		fmt.Println("RESULTADO: Espacio insuficiente para crear la particion logica")
+		fmt.Println("RESULTADO: no hay espacio disponible para crear la particion logica")
 		return 0
-	} else {
-		//no es el ultimo ebr
-		disponible := ebrTemp.Size - int64(unsafe.Sizeof(ebr{}))
-		if disponible >= ebrNuevo.Size {
-			ebrEs := ebr{}
-			ebrEs.Fit = ebrNuevo.Fit
-			ebrEs.Name = ebrNuevo.Name
-			ebrEs.Next = -1
-			ebrEs.Size = ebrNuevo.Size
-			ebrEs.Start = ebrNuevo.Start
-			ebrEs.Status = 0
-
-			ebrTemp.Next = ebrEs.Start
-
-			escribirEbr(path, ebrEs.Start, &ebrEs)
-			escribirEbr(path, ebrTemp.Start, &ebrTemp)
-			return 1
-		}
-		//si no alcanza el tamao sale de aca
-
-		return logicaRecursiva(path, ebrTemp.Next, ebrNuevo, limite)
 	}
+	return 0
 }
 
 func escribirEbr(path string, pos int64, ebr *ebr) {
@@ -519,6 +540,7 @@ func crearDisco(tam int, unit string, ruta string) {
 	var binario3 bytes.Buffer
 	binary.Write(&binario3, binary.BigEndian, disco)
 	writeNextBytes(archivo, binario3.Bytes())
+	graficarMBR(ruta)
 }
 
 func writeNextBytes(file *os.File, bytes []byte) {
