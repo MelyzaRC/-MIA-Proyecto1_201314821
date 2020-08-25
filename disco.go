@@ -572,29 +572,123 @@ func eliminarParticion(path string, nombre string, tipo string) {
 	eliminado := 0
 	if s != nil {
 		for i := 0; i < len(s.Tabla); i++ {
-			//recorriendo las particiones
-			if nombreComparar == s.Tabla[i].Name {
-				//encontro la particion entre las primarias y extendidas
-				if strings.Compare(tipo, "fast") == 0 {
-					particionVacia := particion{}
-					s.Tabla[i] = particionVacia
-					reescribir(s, path)
-					graficarMBR(path)
-				} else if strings.Compare(tipo, "full") == 0 {
-					borrarFullParticion(path, s.Tabla[i].Start, s.Tabla[i].Size)
-					particionVacia := particion{}
-					s.Tabla[i] = particionVacia
-					reescribir(s, path)
-					graficarMBR(path)
-				}
-				eliminado = 1
+			if eliminado == 0 {
+				//recorriendo las particiones
+				if nombreComparar == s.Tabla[i].Name {
+					//encontro la particion entre las primarias y extendidas
+					if strings.Compare(tipo, "fast") == 0 {
+						particionVacia := particion{}
+						s.Tabla[i] = particionVacia
+						reescribir(s, path)
+						graficarMBR(path)
+					} else if strings.Compare(tipo, "full") == 0 {
+						borrarFullParticion(path, s.Tabla[i].Start, s.Tabla[i].Size)
+						particionVacia := particion{}
+						s.Tabla[i] = particionVacia
+						reescribir(s, path)
+						graficarMBR(path)
+					}
+					eliminado = 1
 
-			} else if s.Tabla[i].Type == 'e' {
-				/*Verificar las logicas dentro de la particion extendida*/
-				fmt.Println("Entrar para verificar las logicas")
+				} else if s.Tabla[i].Type == 'e' {
+					/*Verificar las logicas dentro de la particion extendida*/
+					/*Leyendo logicas***************************************/
+					limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size
+					ebrTemp := ebr{}
+					ebrAnterior := ebr{}
+					ebrAnterior.Start = 0
+					ebrAnterior.Next = 0
+					file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+					defer file.Close()
+					if err != nil {
+						log.Fatal(err)
+					}
+					file.Seek(s.Tabla[i].Start, 0)
+					data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+					buffer := bytes.NewBuffer(data)
+					err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+					if err != nil {
+						log.Fatal("binary.Read failed", err)
+					}
+					if &ebrTemp != nil {
+						for i := ebrTemp.Start; i < limite; i++ {
+							ebrLeido := ebr{}
+							file.Seek(i, 0)
+							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+							buffer := bytes.NewBuffer(data)
+							err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+							if err != nil {
+								log.Fatal("binary.Read failed", err)
+							}
+							if &ebrLeido != nil {
+
+								if ebrLeido.Next == -1 { //lego al utimo ebr
+									if ebrLeido.Name == nombreComparar {
+										ebrVacio := ebr{}
+										ebrVacio.Next = ebrLeido.Next
+										ebrVacio.Size = 0
+										ebrVacio.Start = ebrLeido.Start
+										if ebrAnterior.Next == 0 {
+											if strings.Compare(tipo, "fast") == 0 {
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											} else if strings.Compare(tipo, "full") == 0 {
+												borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), s.Tabla[i].Size)
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											}
+										} else {
+											ebrAnterior.Next = ebrLeido.Next
+											if strings.Compare(tipo, "fast") == 0 {
+												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
+											} else if strings.Compare(tipo, "full") == 0 {
+												borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											}
+										}
+										eliminado = 1
+										i = limite + 1
+									}
+									i = limite + 1
+								} else if ebrLeido.Next != -1 { //esta en los ebr antes del ultimo
+									//verificar pero con el next
+									if ebrLeido.Name == nombreComparar {
+										ebrVacio := ebr{}
+										ebrVacio.Next = ebrLeido.Next
+										ebrVacio.Size = 0
+										ebrVacio.Start = ebrLeido.Start
+										if ebrAnterior.Next == 0 {
+											if strings.Compare(tipo, "fast") == 0 {
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											} else if strings.Compare(tipo, "full") == 0 {
+												borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), s.Tabla[i].Size)
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											}
+										} else {
+											ebrAnterior.Next = ebrLeido.Next
+											if strings.Compare(tipo, "fast") == 0 {
+												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
+											} else if strings.Compare(tipo, "full") == 0 {
+												borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
+												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+											}
+										}
+										eliminado = 1
+										i = limite + 1
+									}
+									ebrAnterior = ebrLeido
+									//porque al iterar el for le suma uno
+									i = ebrLeido.Next - 1
+								}
+
+							}
+
+						}
+					}
+					/*Final leyendo logicas*********************************/
+				}
 			}
 		}
 		if eliminado == 1 {
+			graficarMBR(path)
 			fmt.Println("RESULTADO: Se ha eliminado correctamente la particion")
 		} else {
 			fmt.Println("RESULTADO: No se ha podido eliminar la particion")

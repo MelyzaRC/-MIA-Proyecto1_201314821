@@ -25,5 +25,13 @@ Fdisk -fit->bf -sizE->150 -unit->b -type->l -path->"/home/melyza/Escritorio/mis 
 PaUsE
 
 #Borrar la particion anterior
-fdisk -name->"Particion4d" -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
-pause 
+fdisk -name->Particion5 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
+pause
+
+#Borrar la particion anterior
+fdisk -name->Particion6 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
+pause
+
+#Borrar la particion anterior
+fdisk -name->Particion7 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
+pause

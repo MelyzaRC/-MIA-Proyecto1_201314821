@@ -90,8 +90,11 @@ func graficarMBR(path string) {
 								log.Fatal("binary.Read failed", err)
 							}
 							if &ebrLeido != nil {
-
-								if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+								if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
+									contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
+										"<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
+									i = ebrLeido.Next - 1
+								} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
 									contenido = contenido + "<TD border=\"1\"  bgcolor=\"#4B8DF1\"><b>EBR</b></TD>\n" +
 										"<TD border=\"1\"  bgcolor=\"#BFC9CA\"><b>Libre</b></TD>\n"
 									i = limite + 1
