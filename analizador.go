@@ -398,7 +398,7 @@ func comandoFkdisk(comando string) {
 			} else if deleteFlag > 0 {
 				fDiskEliminar(comando)
 			} else if addFlag > 0 {
-				fmt.Println("Es un add")
+				fDiskAdd(comando)
 			} else {
 				//si no es add ni delete puede que sea crear
 				fDiskCrear(comando)
@@ -462,7 +462,6 @@ func fDiskEliminar(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia
 /**************************************************************
 	CREAR PARTICION
 ***************************************************************/
@@ -510,7 +509,7 @@ func fDiskCrear(comando string) {
 						case "path":
 							pathOk, path = verificarPath(atributo[1])
 						case "name":
-							name = atributo[1]
+							name = strings.ToLower(strings.ReplaceAll(atributo[1], "\"", ""))
 						case "unit":
 							unit = atributoUnitParticion(atributo[1])
 						case "type":
@@ -581,6 +580,69 @@ func fDiskCrear(comando string) {
 /**************************************************************
 	MODIFICAR TAMANO PARTICION
 ***************************************************************/
+func fDiskAdd(comando string) {
+	//verifico que el comando exista
+	if strings.Compare(comando, "") != 0 {
+		var tamAdd int = 0
+		tipoAdd := ""
+		nombreAdd := ""
+		pathAdd := ""
+		pathOk := 0
+		unitAdd := "k"
+		s := strings.Split(comando, " -")
+		if len(s) > 3 {
+			for i := 1; i < len(s); i++ {
+				s1 := strings.Split(s[i], "->")
+				if len(s1) > 1 {
+					switch strings.ToLower(strings.TrimSpace(s1[0])) {
+					case "add":
+						tipoAdd, tamAdd = atributoAdd(s1[1])
+					case "name":
+						nombreAdd = strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))
+					case "path":
+						pathOk, pathAdd = verificarPath(s1[1])
+					case "unit":
+						unitAdd = atributoUnitParticion(s1[1])
+					default:
+						fmt.Println("RESULTADO: El atributo " + s1[0] + " no se reconoce para el comando ADD")
+					}
+				}
+			}
+			if pathOk == 1 {
+				//si existe el path
+				if strings.Compare(tipoAdd, "error") != 0 {
+					//si esta bien el tipo de eliminacion
+					if strings.Compare(nombreAdd, "") != 0 {
+						//verificar la unidad
+						if strings.Compare(unitAdd, "error") != 0 {
+							switch unitAdd {
+							case "k":
+								tamAdd = tamAdd * 1024
+							case "b":
+							case "m":
+								tamAdd = tamAdd * 1024 * 1024
+							}
+							//si esta bien el nombre de la particion
+							modificarParticion(pathAdd, nombreAdd, int64(tamAdd), tipoAdd)
+						} else {
+
+						}
+					} else {
+						fmt.Println("RESULTADO: Debe ingresar el nombre de la particion a modificar")
+					}
+				} else {
+					fmt.Println("RESULTADO: Error en el tipo de modificacion de la particion")
+				}
+			} else if pathOk == 2 {
+				fmt.Println("RESULTADO: El archivo indicado no representa un disco")
+			} else {
+				fmt.Println("RESULTADO: No existe el archivo especificado")
+			}
+		} else {
+			fmt.Println("RESULTADO: Faltan atributos obligatorios para el comando FDISK ADD")
+		}
+	}
+}
 
 /**************************************************************
 	COMANDO MOUNT
@@ -708,3 +770,19 @@ func atributoDelete(cadena string) string {
 		return "error"
 	}
 }
+
+func atributoAdd(cadena string) (string, int) {
+	if strings.Compare(cadena, "") == 1 {
+		i, err := strconv.Atoi(cadena)
+		if err != nil {
+			return "error", 0
+		}
+		if i < 0 {
+			return "quitar", i * -1
+		}
+		return "agregar", i
+	}
+	return "error", 0
+}
+
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia

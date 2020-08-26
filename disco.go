@@ -567,6 +567,7 @@ func removerDisco(path string) {
 ***************************************************************/
 func eliminarParticion(path string, nombre string, tipo string) {
 	s := leerDisco(path)
+	nombre = strings.ReplaceAll(strings.ToLower(nombre), "\"", "")
 	var nombreComparar [16]byte
 	copy(nombreComparar[:], nombre)
 	eliminado := 0
@@ -579,13 +580,19 @@ func eliminarParticion(path string, nombre string, tipo string) {
 					if strings.Compare(tipo, "fast") == 0 {
 						particionVacia := particion{}
 						s.Tabla[i] = particionVacia
+						reordenarParticiones(s)
 						reescribir(s, path)
 						graficarMBR(path)
 					} else if strings.Compare(tipo, "full") == 0 {
-						borrarFullParticion(path, s.Tabla[i].Start, s.Tabla[i].Size)
+						h := s.Tabla[i].Start
+						h2 := s.Tabla[i].Size
 						particionVacia := particion{}
 						s.Tabla[i] = particionVacia
+						reordenarParticiones(s)
 						reescribir(s, path)
+
+						borrarFullParticion(path, h, h2)
+
 						graficarMBR(path)
 					}
 					eliminado = 1
@@ -697,17 +704,258 @@ func eliminarParticion(path string, nombre string, tipo string) {
 }
 
 func borrarFullParticion(path string, inicio int64, tam int64) {
-	archivo, err := os.Create(path)
+	archivo, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
 	defer archivo.Close()
+	var vacio int8 = 0
+	s := &vacio
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		for i := inicio; i < inicio+tam; i++ {
+			archivo.Seek(0, 0)
+			archivo.Seek(i, 0)
+			var binario bytes.Buffer
+			binary.Write(&binario, binary.BigEndian, s)
+			writeNextBytes(archivo, binario.Bytes())
+		}
+	}
+}
+
+/**************************************************************
+	Modificar tamano de particion
+***************************************************************/
+//el tamano viene en bytes
+func modificarParticion(path string, nombre string, tam int64, tipo string) {
+	s := leerDisco(path)
+	nombre = strings.ReplaceAll(strings.ToLower(nombre), "\"", "")
+	var nombreComparar [16]byte
+	copy(nombreComparar[:], nombre)
+	modificado := 0
+
+	if s != nil {
+		finAnterior := s.Tamano - 1
+		for i := len(s.Tabla) - 1; i >= 0; i-- {
+			if modificado == 0 {
+				//recorriendo las particiones
+				if s.Tabla[i].Size == 0 {
+					//particion vacia
+					//fin anterior se queda como esta
+
+				} else {
+					if nombreComparar == s.Tabla[i].Name {
+						//encontro la particion en la primera tabla
+						if strings.Compare(tipo, "quitar") == 0 {
+							if s.Tabla[i].Type != 'e' {
+								res := s.Tabla[i].Size - tam
+								if res > 0 {
+									s.Tabla[i].Size = res
+									i = -10
+									modificado = 1
+									break
+								} else {
+									i = -10
+									fmt.Println("RESULTADO: No se puede reducir el espacio en la particion")
+								}
+							} else {
+								//verificar si hay espacio en la extendida con base a las logicas
+								espacioD := obtenerUtilizacionEBR(path, s.Tabla[i].Start, s.Tabla[i].Size)
+								if espacioD >= tam {
+									s.Tabla[i].Size = s.Tabla[i].Size - tam
+									i = -10
+									modificado = 1
+									break
+								} else {
+									i = -10
+									fmt.Println("RESULTADO: No se puede reducir el espacio en la particion extendida")
+								}
+							}
+						} else if strings.Compare(tipo, "agregar") == 0 {
+							res := finAnterior - s.Tabla[i].Start + s.Tabla[i].Size
+							if res >= tam {
+								s.Tabla[i].Size = res
+								modificado = 1
+								i = -10
+								break
+							} else {
+								fmt.Println("RESULTADO: No se puede ampliar el tama;o de la particion")
+							}
+						}
+					} else if s.Tabla[i].Type == 'e' {
+						//puede que la particion a modificar sea una logica****
+						ebrTemp := ebr{}
+						file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+						defer file.Close()
+						if err != nil {
+							log.Fatal(err)
+						}
+						file.Seek(s.Tabla[i].Start, 0)
+						data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+						buffer := bytes.NewBuffer(data)
+						err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+						if err != nil {
+							log.Fatal("binary.Read failed", err)
+						}
+						limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size
+						if &ebrTemp != nil {
+							for j := ebrTemp.Start; j < limite; j++ {
+								ebrLeido := ebr{}
+
+								file.Seek(j, 0)
+								data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+								buffer := bytes.NewBuffer(data)
+								err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+								if err != nil {
+									log.Fatal("binary.Read failed", err)
+								}
+								if &ebrLeido != nil {
+									fmt.Print("Leido next ")
+									fmt.Println(ebrLeido.Next)
+									fmt.Println("Leido size")
+									fmt.Println(ebrLeido.Size)
+									if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
+
+										//Aqui no valuo porque es el primer EBR solo lo salto
+										j = ebrLeido.Next - 1
+										break
+									} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+										//la particion esta vacia
+										j = limite + 1
+										break
+									} else if ebrLeido.Next == -1 && ebrLeido.Size > 0 { //lego al utimo ebr
+										//valuo con el limite porque es el ultimo ebr
+										if ebrLeido.Name == nombreComparar {
+											if strings.Compare(tipo, "quitar") == 0 {
+												espacio := ebrLeido.Size - tam
+												if espacio > 0 {
+													ebrLeido.Size = espacio
+													modificado = 1
+													j = limite + 1
+													escribirEbr(path, ebrLeido.Start, &ebrLeido)
+													break
+												} else {
+													j = limite + 1
+													fmt.Print("RESULTADO: No se puede reducir la particion logica")
+												}
+											} else if strings.Compare(tipo, "agregar") == 0 {
+												espacioDisponible := limite - ebrLeido.Start + ebrLeido.Size
+												if espacioDisponible >= tam {
+													ebrLeido.Size = ebrLeido.Size + tam
+													escribirEbr(path, ebrLeido.Start, &ebrLeido)
+													modificado = 1
+													j = limite + 1
+													break
+												} else {
+													j = limite + 1
+													fmt.Print("RESULTADO: No se puede ampliar el tamano de la particion logica")
+													break
+												}
+											}
+										} else {
+											j = ebrLeido.Next - 1
+											break
+										}
+
+									} else if ebrLeido.Next != -1 && ebrLeido.Size > 0 { //esta en los ebr antes del ultimo
+										//verificar pero con el next
+										if ebrLeido.Name == nombreComparar {
+											if strings.Compare(tipo, "quitar") == 0 {
+												espacio := ebrLeido.Size - tam
+												if espacio > 0 {
+													ebrLeido.Size = espacio
+													modificado = 1
+													j = limite + 1
+													escribirEbr(path, ebrLeido.Start, &ebrLeido)
+													break
+												} else {
+													j = limite + 1
+													fmt.Print("RESULTADO: No se puede reducir la particion logica")
+												}
+											} else if strings.Compare(tipo, "agregar") == 0 {
+												espacioDisponible := ebrLeido.Next - ebrLeido.Start + ebrLeido.Size
+												if espacioDisponible >= tam {
+													ebrLeido.Size = ebrLeido.Size + tam
+													escribirEbr(path, ebrLeido.Start, &ebrLeido)
+													modificado = 1
+													j = limite + 1
+													break
+												} else {
+													j = limite + 1
+													fmt.Print("RESULTADO: No se puede ampliar el tamano de la particion logica")
+												}
+											}
+										} else {
+											fmt.Print("Aqui seria a fuerzas ")
+											j = ebrLeido.Next - 1
+										}
+
+									}
+								}
+								if modificado == 0 {
+									j = ebrLeido.Next - 1
+								}
+							}
+							if modificado == 0 {
+								finAnterior = s.Tabla[i].Start - 1
+							} else {
+								i = -1
+							}
+						}
+						if modificado == 0 {
+							finAnterior = s.Tabla[i].Start - 1
+						}
+						//fin de las logicas***********************************
+					} else {
+						finAnterior = s.Tabla[i].Start - 1
+					}
+				}
+			}
+		}
+		if modificado == 1 {
+			fmt.Println("RESULTADO: Se ha modificado el tamano de la particion")
+			reescribir(s, path)
+			graficarMBR(path)
+		}
+	}
+}
+
+func obtenerUtilizacionEBR(path string, inicio int64, final int64) int64 {
+	ebrTemp := ebr{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	var vacio int8 = 0
-	s := &vacio
-	for i := inicio; i < inicio+tam; i++ {
-		archivo.Seek(i, 0)
-		var binario bytes.Buffer
-		binary.Write(&binario, binary.BigEndian, s)
-		writeNextBytes(archivo, binario.Bytes())
+	file.Seek(inicio, 0)
+	data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
 	}
+	limite := inicio + final
+
+	if &ebrTemp != nil {
+		for i := ebrTemp.Start; i < limite; i++ {
+			ebrLeido := ebr{}
+			file.Seek(i, 0)
+			data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+			buffer := bytes.NewBuffer(data)
+			err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+			if err != nil {
+				log.Fatal("binary.Read failed", err)
+			}
+			if &ebrLeido != nil {
+				if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+					//particion vacia
+					return limite - int64(unsafe.Sizeof(ebr{}))
+				} else if ebrLeido.Next == -1 && ebrLeido.Size > 0 {
+					return limite - ebrLeido.Start - int64(unsafe.Sizeof(ebr{})) - ebrLeido.Size
+				} else {
+					i = ebrLeido.Next - 1
+				}
+			}
+
+		}
+	}
+	return 0
 }

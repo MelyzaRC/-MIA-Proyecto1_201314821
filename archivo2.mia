@@ -1,37 +1,46 @@
 #Archivo2
-#Creacion del disco
+
+#Creacion del disco 
 mkdisk -size->10 -unit->k -path->"/home/melyza/Escritorio/mis discos" -name->discoParticiones.disk        
 PAUSE
+
 #Particion 1 Primaria
-Fdisk -fit->bf -sizE->1 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion1
+Fdisk -fit->bf -sizE->2 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion1
 PaUsE
 #Particion 2 Primaria
-Fdisk -fit->bf -sizE->1 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion2
+Fdisk -fit->bf -sizE->2 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion2
 PaUsE
 #Particion 3 Primaria
-Fdisk -fit->bf -sizE->1 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion3
+Fdisk -fit->bf -sizE->2 -unit->k -type->p -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion3
 PaUsE
 #Particion 4 Extendida
-Fdisk -fit->bf -sizE->3 -unit->k -type->e -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion4
+Fdisk -fit->bf -sizE->2 -unit->k -type->e -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion4
 PaUsE
 #Particion 5 Logica
-Fdisk -fit->bf -sizE->150 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion5
+Fdisk -fit->bf -sizE->520 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion5
 PaUsE
 #Particion 6 Logica
-Fdisk -fit->bf -sizE->150 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion6
-PaUsE
-#Particion 7 Logica
-Fdisk -fit->bf -sizE->150 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion7
+Fdisk -fit->bf -sizE->300 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" -name->Particion6
 PaUsE
 
-#Borrar la particion anterior
-fdisk -name->Particion5 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
-pause
+#Modificar particion 1
+fdisk -add->-50 -unit->b -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" \*
+-name->Particion5
+pause 
 
-#Borrar la particion anterior
-fdisk -name->Particion6 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
-pause
+#Modificar particion 1
+fdisk -add->-500 -unit->b -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" \*
+-name->Particion4
+pause 
 
-#Borrar la particion anterior
-fdisk -name->Particion7 -delete->fast -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk"
-pause
+
+
+#Modificar particion 1
+fdisk -add->-520 -unit->b -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" \*
+-name->Particion1
+pause 
+
+#Modificar particion 1
+fdisk -add->-520 -unit->b -path->"/home/melyza/Escritorio/mis discos/discoParticiones.disk" \*
+-name->Particion2
+pause 
