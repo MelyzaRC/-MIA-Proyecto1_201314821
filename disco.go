@@ -23,34 +23,6 @@ import (
 )
 
 /**************************************************************
-	Definicion de structs
-***************************************************************/
-type mbr struct {
-	Tamano int64
-	Fecha  [16]byte
-	Firma  int8
-	Tabla  [4]particion
-}
-
-type particion struct {
-	Status byte
-	Type   byte
-	Fit    byte
-	Start  int64
-	Size   int64
-	Name   [16]byte
-}
-
-type ebr struct {
-	Status byte
-	Fit    byte
-	Start  int64
-	Size   int64
-	Next   int64
-	Name   [16]byte
-}
-
-/**************************************************************
 	Crear particion
 	-El path ya fue validado, asi como que sea un disco
 ***************************************************************/
@@ -140,7 +112,7 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 				/******************************************************************/
 				//fmt.Println(disco)
 				fmt.Println("RESULTADO: Particion creada con exito")
-				graficarMBR(path)
+				graficarDISCO(path)
 			} /*else {
 				fmt.Println("RESULTADO: No se ha podido crear la particion")
 			}*/
@@ -324,7 +296,7 @@ func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
 						ebrLeido.Status = 0
 						ebrLeido.Next = -1
 						escribirEbr(path, ebrLeido.Start, &ebrLeido)
-						fmt.Print("EBR start: ")
+						//fmt.Print("EBR start: ")
 						fmt.Println(ebrLeido.Start)
 						return 1
 					}
@@ -540,7 +512,7 @@ func crearDisco(tam int, unit string, ruta string) {
 	var binario3 bytes.Buffer
 	binary.Write(&binario3, binary.BigEndian, disco)
 	writeNextBytes(archivo, binario3.Bytes())
-	graficarMBR(ruta)
+	graficarDISCO(ruta)
 }
 
 func writeNextBytes(file *os.File, bytes []byte) {
@@ -582,7 +554,7 @@ func eliminarParticion(path string, nombre string, tipo string) {
 						s.Tabla[i] = particionVacia
 						reordenarParticiones(s)
 						reescribir(s, path)
-						graficarMBR(path)
+						graficarDISCO(path)
 					} else if strings.Compare(tipo, "full") == 0 {
 						h := s.Tabla[i].Start
 						h2 := s.Tabla[i].Size
@@ -593,7 +565,7 @@ func eliminarParticion(path string, nombre string, tipo string) {
 
 						borrarFullParticion(path, h, h2)
 
-						graficarMBR(path)
+						graficarDISCO(path)
 					}
 					eliminado = 1
 
@@ -695,7 +667,7 @@ func eliminarParticion(path string, nombre string, tipo string) {
 			}
 		}
 		if eliminado == 1 {
-			graficarMBR(path)
+			graficarDISCO(path)
 			fmt.Println("RESULTADO: Se ha eliminado correctamente la particion")
 		} else {
 			fmt.Println("RESULTADO: No se ha podido eliminar la particion")
@@ -808,10 +780,6 @@ func modificarParticion(path string, nombre string, tam int64, tipo string) {
 									log.Fatal("binary.Read failed", err)
 								}
 								if &ebrLeido != nil {
-									fmt.Print("Leido next ")
-									fmt.Println(ebrLeido.Next)
-									fmt.Println("Leido size")
-									fmt.Println(ebrLeido.Size)
 									if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
 
 										//Aqui no valuo porque es el primer EBR solo lo salto
@@ -884,7 +852,6 @@ func modificarParticion(path string, nombre string, tam int64, tipo string) {
 												}
 											}
 										} else {
-											fmt.Print("Aqui seria a fuerzas ")
 											j = ebrLeido.Next - 1
 										}
 
@@ -913,7 +880,7 @@ func modificarParticion(path string, nombre string, tam int64, tipo string) {
 		if modificado == 1 {
 			fmt.Println("RESULTADO: Se ha modificado el tamano de la particion")
 			reescribir(s, path)
-			graficarMBR(path)
+			graficarDISCO(path)
 		}
 	}
 }

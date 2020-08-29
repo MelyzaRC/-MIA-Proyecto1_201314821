@@ -1,0 +1,58 @@
+#Archivo2
+
+#Creacion del disco 1
+mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoMontar.disk        
+PAUSE
+
+#Creacion del disco 2
+mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoMontar2.disk        
+PAUSE
+
+
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoMontar2.disk" -name->Particion1
+PaUsE
+#Particion 2 Primaria
+Fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk" -name->Particion2
+PaUsE
+#Particion 3 Primaria
+Fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk" -name->Particion3
+PaUsE
+
+#Particion 4 Extendida
+Fdisk -fit->bf -sizE->1 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk" -name->Particion4
+PaUsE
+
+
+#Particion 5 Primaria
+Fdisk -fit->bf -sizE->500 -unit->b -type->l -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk" -name->Particion5
+PaUsE
+
+#montando particion 1
+mount -name->Particion1 -path->"/home/melyza/Escritorio/mis discos/discoMontar2.disk"
+pause
+#montando particion 2
+mount -name->Particion2 -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk"
+pause
+#montando particion 3
+mount -name->Particion3 -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk"
+pause
+#montando particion 4
+mount -name->Particion5 -path->"/home/melyza/Escritorio/mis discos/discoMontar.disk"
+pause
+
+#imprimiendo particiones montadas
+mount
+PaUsE
+
+#Desmontando particiones
+unmount -id1->vda1
+pause 
+unmount -id1->vdb1 -id2->vdb2
+pause 
+
+#Imprimiendo nuevamente las particiones
+mount
+pause 
+
+#fin del archivo

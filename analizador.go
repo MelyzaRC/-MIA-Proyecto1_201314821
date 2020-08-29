@@ -646,18 +646,86 @@ func fDiskAdd(comando string) {
 
 /**************************************************************
 	COMANDO MOUNT
+	Obligatorios
+	-path
+	-name
 ***************************************************************/
 func comandoMount(comando string) {
-	fmt.Println("Comando MOUNT")
+	if strings.Compare(comando, "") != 0 {
+		fmt.Println("EJECUTANDO: " + comando)
+		s := strings.Split(comando, " -")
+		if len(s) == 1 {
+			imprimirMOUNT()
+		} else if len(s) == 3 {
+			nombre := ""
+			path := ""
+			pathOk := 0
+			for i := 1; i < len(s); i++ {
+				s2 := strings.Split(s[i], "->")
+				if len(s2) > 1 {
+					switch strings.ToLower(strings.TrimSpace(s2[0])) {
+					case "path":
+						pathOk, path = verificarPath(s2[1])
+					case "name":
+						nombre = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
+					default:
+						fmt.Println("RESULTADO: No se reconoce el comando " + s2[0] + " para el comando MOUNT")
+					}
+				}
+			}
+			if pathOk == 1 {
+				if strings.Compare(nombre, "") != 0 {
+					num := montarParticion(path, nombre)
+					if num == 1 {
+						fmt.Println("RESULTADO: Particion montada con exito")
+					}
+				} else {
+					fmt.Println("RESULTADO: debe ingresar el nombre de la particion")
+				}
+			} else if pathOk == 0 {
+				fmt.Println("RESULTADO: No existe la ruta especificada")
+			} else if pathOk == 2 {
+				fmt.Println("RESULTADO: El archivo especificado no representa un disco")
+			}
+		} else if len(s) < 3 {
+			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando MOUNT")
+		} else if len(s) > 3 {
+			fmt.Println("RESULTADO: Se ingresaron mas parametros de los requeridos por el comando MOUNT")
+		}
+	}
 }
 
 /**************************************************************
 	COMANDO UNMOUNT
 ***************************************************************/
 func comandoUnmount(comando string) {
-	fmt.Println("Comando UNMOUNT")
+	if strings.Compare(comando, "") != 0 {
+		fmt.Println("EJECUTANDO: " + comando)
+		s := strings.Split(comando, " -")
+		if len(s) > 1 {
+			var listaID []string
+			for i := 1; i < len(s); i++ {
+				s2 := strings.Split(strings.ToLower(strings.TrimSpace(s[i])), "->")
+				if len(s2) > 1 {
+					/*
+						Colocar un switch
+						Aqui aun no he valudado que venga IDn u otra cosa pero para avanzar por el momento lo dejo asi
+					*/
+					listaID = append(listaID, s2[1])
+				}
+			}
+			if len(listaID) > 0 {
+				desmontar(listaID)
+			} else {
+				fmt.Println("RESULTADO: Debe ingresar el id de la(s) particion(es) a desmontar")
+			}
+		} else {
+			fmt.Println("RESULTADO: Debe ingresar el id de la(s) particion(es) a desmontar")
+		}
+	}
 }
 
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo4.mia
 /**************************************************************
 	Atributos
 ***************************************************************/
@@ -784,5 +852,3 @@ func atributoAdd(cadena string) (string, int) {
 	}
 	return "error", 0
 }
-
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo2.mia
