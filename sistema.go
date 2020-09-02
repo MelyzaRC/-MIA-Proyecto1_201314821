@@ -18,6 +18,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 	"unsafe"
 )
 
@@ -299,6 +300,9 @@ func imprimirMOUNT() {
 			}
 		}
 	}
+	fmt.Println()
+	fmt.Println("************************************************************************************")
+	fmt.Println()
 }
 
 func BytesToString(b []byte) string {
@@ -370,7 +374,7 @@ func desmontarParticion(letra byte, numero int64) (int, *[16]byte, *[100]byte) {
 			}
 		}
 	}
-	fmt.Println("RESULTADO: No se ha encontrado la particion especificada para desmontar")
+	fmt.Println("RESULTADO: No se ha encontrado la particion especificada")
 	return 0, nil, nil
 }
 
@@ -454,4 +458,265 @@ func actualizarEstado(path string, nombre *[16]byte) {
 		return
 	}
 	return
+}
+
+/**************************************************************
+	FORMATEO
+***************************************************************/
+func formatear(idFormatear string, tipoFormato string) { //convertir a megas
+	var tamParticion int64
+	var inicioParticion int64
+	var tipoParticion int
+	if strings.Compare(idFormatear, "") != 0 {
+		s := strings.Split(strings.ToLower(strings.TrimSpace(idFormatear)), "")
+		if len(s) > 3 {
+			if s[0][0] == 'v' && s[1][0] == 'd' && s[2][0] > 96 && s[2][0] < 123 {
+				var letra byte = s[2][0]
+				inputFmt := idFormatear[3:len(idFormatear)] + ""
+				idParticion := atributoSize(inputFmt)
+				if idParticion > 0 {
+					numResult, nombre, path := desmontarParticion(letra, int64(idParticion))
+					if numResult == 1 {
+						//mandar a cambiar el estado de la particion en el mbr\
+						pathEnviar := ""
+						numeroEnviar := 0
+						for index := 0; index < len(path); index++ {
+							if path[index] == 0 {
+								numeroEnviar = index
+								index = len(path) + 1
+								break
+							}
+						}
+						pathEnviar = BytesToString(path[0:numeroEnviar])
+						fmt.Println(pathEnviar)
+						fmt.Println(nombre)
+						tipoParticion, inicioParticion, tamParticion = obtenerDatosParticion(pathEnviar, *nombre)
+						if tipoParticion == 0 {
+							fmt.Println("RESULTADO: No se encuentra la particion")
+						} else if tipoParticion == 3 {
+							fmt.Println("RESULTADO: No se puede formatear una particion extendida")
+						} else if tipoParticion == 1 || tipoParticion == 2 {
+							realizarFormato(pathEnviar, inicioParticion, tamParticion)
+						}
+					}
+				} else {
+					fmt.Println("RESULTADO: Error en el id de la particion a desmontar")
+				}
+			} else {
+				fmt.Println("RESULTADO: El formato del ID de la particion es incorrecto")
+			}
+		}
+	}
+
+}
+
+func obtenerDatosParticion(path string, nombre [16]byte) (int, int64, int64) {
+	if strings.Compare(path, "") != 0 {
+		s := leerDisco(path)
+		if s != nil {
+			//buscando en las particiones principales
+			for i := 0; i < len(s.Tabla); i++ {
+				if nombre == s.Tabla[i].Name {
+					if s.Tabla[i].Type == 'p' {
+						//es una primaria
+						return 1, s.Tabla[i].Start, s.Tabla[i].Size
+					}
+					//es una extendida
+					return 3, 0, 0
+				}
+			}
+			//si logra salir del for es porque no la encontro en las principales
+			//buscar entre las logicas
+			for i := 0; i < len(s.Tabla); i++ {
+				if s.Tabla[i].Type == 'e' {
+					//encontro la particion extendida
+					ebrTemp := ebr{}
+					file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+					defer file.Close()
+					if err != nil {
+						log.Fatal(err)
+					}
+					file.Seek(s.Tabla[i].Start, 0)
+					data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+					buffer := bytes.NewBuffer(data)
+					err = binary.Read(buffer, binary.BigEndian, &ebrTemp)
+					if err != nil {
+						log.Fatal("binary.Read failed", err)
+					}
+					limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size
+					if &ebrTemp != nil {
+						for j := ebrTemp.Start; j < limite; j++ {
+							ebrLeido := ebr{}
+
+							file.Seek(j, 0)
+							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+							buffer := bytes.NewBuffer(data)
+							err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+							if err != nil {
+								log.Fatal("binary.Read failed", err)
+							}
+							if &ebrLeido != nil {
+								if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
+
+									//Aqui no valuo porque es el primer EBR solo lo salto
+									j = ebrLeido.Next - 1
+								} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+									//la particion esta vacia
+									j = limite + 1
+									return 0, 0, 0
+								} else if ebrLeido.Next == -1 && ebrLeido.Size > 0 { //lego al utimo ebr
+									//valuo con el limite porque es el ultimo ebr
+									if ebrLeido.Name == nombre {
+										return 2, ebrLeido.Start, ebrLeido.Size
+									}
+									return 0, 0, 0
+								} else if ebrLeido.Next != -1 && ebrLeido.Size > 0 { //esta en los ebr antes del ultimo
+									//verificar pero con el next
+									if ebrLeido.Name == nombre {
+										return 2, ebrLeido.Start, ebrLeido.Size
+									}
+									j = ebrLeido.Next - 1
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0, 0, 0
+}
+
+func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
+
+	//datos para formula
+	var tamAVD int64 = int64(unsafe.Sizeof(avd{}))
+	var tamDD int64 = int64(unsafe.Sizeof(dd{}))
+	var tamInodo int64 = int64(unsafe.Sizeof(inodo{}))
+	var tamBloque int64 = int64(unsafe.Sizeof(bloque{}))
+	var tamBitacora int64 = int64(unsafe.Sizeof(bitacora{}))
+	var tamSuperBloque int64 = int64(unsafe.Sizeof(superbloque{}))
+
+	//formula
+	var nEstructuras = (tamParticion - (2 * tamSuperBloque)) / (27 + tamAVD + tamDD + (5*tamInodo + (20 * tamBloque) + tamBitacora))
+
+	//cantidad de tipos de estructura
+	cantidadAVD := nEstructuras
+	cantidadDD := nEstructuras
+	cantidadInodos := 5 * nEstructuras
+	cantidadBloques := 20 * nEstructuras
+	//cantidadBitacoras := nEstructuras
+
+	inicioSuperBloque := inicioParticion
+	iniciobitmapAVD := inicioParticion + tamSuperBloque
+	inicioAVD := iniciobitmapAVD + cantidadAVD
+	iniciobitmapDD := inicioAVD + (tamAVD * cantidadAVD)
+	inicioDD := iniciobitmapDD + cantidadDD
+	iniciobitMapInodo := inicioDD + (tamDD * cantidadDD)
+	inicioinodos := iniciobitMapInodo + cantidadInodos
+	iniciobitmapBloque := inicioinodos + (tamInodo * cantidadInodos)
+	iniciobloques := iniciobitmapBloque + cantidadBloques
+	iniciobitacora := iniciobloques + (tamBloque * cantidadBloques)
+	//iniciocopiaSB := iniciobitacora + (tamBitacora * cantidadBitacoras)
+	//finalparticion := iniciocopiaSB + tamSuperBloque
+
+	/*
+		fmt.Print("No. de estructuras: ")
+		fmt.Println(nEstructuras)
+
+		fmt.Print("Inicio de SuperBloque: ")
+		fmt.Println(inicioSuperBloque)
+
+		fmt.Print("Inicio de bitmap AVD: ")
+		fmt.Println(iniciobitmapAVD)
+
+		fmt.Print("Inicio de AVD: ")
+		fmt.Println(inicioAVD)
+
+		fmt.Print("Inicio de bitmap DD: ")
+		fmt.Println(iniciobitmapDD)
+
+		fmt.Print("Inicio de DD: ")
+		fmt.Println(inicioDD)
+
+		fmt.Print("Inicio de bitmap Inodos: ")
+		fmt.Println(iniciobitMapInodo)
+
+		fmt.Print("Inicio de Inodos: ")
+		fmt.Println(inicioinodos)
+
+		fmt.Print("Inicio de bitmap Bloques: ")
+		fmt.Println(iniciobitmapBloque)
+
+		fmt.Print("Inicio de bloques: ")
+		fmt.Println(iniciobloques)
+
+		fmt.Print("Inicio de bitacora: ")
+		fmt.Println(iniciobitacora)
+
+		fmt.Print("Inicio copia de SB: ")
+		fmt.Println(iniciocopiaSB)
+
+		fmt.Print("Final de particion: ")
+		fmt.Println(finalparticion)
+	*/
+	//abriendo el archivo
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	//formando el superbloque
+	nuevoSB := superbloque{}
+	//nuevoSB.NombreHD
+	nuevoSB.ArbolVirtualCount = cantidadAVD
+	nuevoSB.DetalleDirectorioCount = cantidadDD
+	nuevoSB.InodosCount = cantidadInodos
+	nuevoSB.BloquesCount = cantidadBloques
+	nuevoSB.ArbolVirtualFree = cantidadAVD
+	nuevoSB.DetalleDirectorioFree = cantidadDD
+	nuevoSB.InodosFree = cantidadInodos
+	nuevoSB.BloquesFree = cantidadBloques
+	nuevoSB.DateCreacion = getFechaHora()
+	nuevoSB.DateUltimoMontaje = getFechaHora()
+	nuevoSB.MontajesCount = 1
+	nuevoSB.InicioBMAV = iniciobitmapAVD
+	nuevoSB.InicioAV = inicioAVD
+	nuevoSB.InicioBMDD = iniciobitmapDD
+	nuevoSB.InicioDD = inicioDD
+	nuevoSB.InicioBMInodos = iniciobitMapInodo
+	nuevoSB.InicioInodos = inicioinodos
+	nuevoSB.InicioBMBloques = iniciobitmapBloque
+	nuevoSB.InicioBloques = iniciobloques
+	nuevoSB.InicioLog = iniciobitacora
+	nuevoSB.TamAV = tamAVD
+	nuevoSB.TamDD = tamDD
+	nuevoSB.TamInodo = tamInodo
+	nuevoSB.TamBloque = tamBloque
+	nuevoSB.PrimerLibreAV = iniciobitmapAVD
+	nuevoSB.PrimerLibreDD = iniciobitmapDD
+	nuevoSB.PrimerLibreInodo = iniciobitMapInodo
+	nuevoSB.PrimerLibreBloque = iniciobitmapBloque
+	nuevoSB.MagicNum = 201314821
+
+	/*Escribiendo el superbloque*/
+	file.Seek(inicioSuperBloque, 0)
+	var binario bytes.Buffer
+	binary.Write(&binario, binary.BigEndian, nuevoSB)
+	writeNextBytes(file, binario.Bytes())
+
+}
+
+func getFechaHora() [16]byte {
+	var retFecha [16]byte
+	fechahora := time.Now()
+	fechahoraArreglo := strings.Split(fechahora.String(), "")
+	fechahoraCadena := ""
+	for i := 0; i < 16; i++ {
+		fechahoraCadena = fechahoraCadena + fechahoraArreglo[i]
+	}
+	copy(retFecha[:], fechahoraCadena)
+	return retFecha
 }

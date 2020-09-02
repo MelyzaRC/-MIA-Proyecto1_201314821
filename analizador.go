@@ -109,6 +109,8 @@ func analizar(comando string) {
 			comandoMount(comando)
 		case "unmount":
 			comandoUnmount(comando)
+		case "mkfs":
+			comandoMKFS(comando)
 		default:
 			fmt.Println("La instruccion " + s[0] + " no se reconoce")
 		}
@@ -293,24 +295,24 @@ func comandoMkdisk(comando string) {
 						fmt.Println("RESULTADO: El disco ya se encuentra creado, cambie de nombre")
 						/*Esto lo tengo que quitar*/
 						sName := strings.Split(name, ".")
-						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
+						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
 							//Aqui mando a crear el archivo
 							crearDisco(size, unit, path+"/"+name)
 							fmt.Println("RESULTADO: Disco creado")
 						} else {
-							fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DISK")
+							fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DSK")
 						}
 						/*Esto lo tengo que quitar*/
 					} else {
 						//verificar extension
 						sName := strings.Split(name, ".")
 						if len(sName) > 1 {
-							if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
+							if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
 								//Aqui mando a crear el archivo
 								crearDisco(size, unit, path+"/"+name)
 								fmt.Println("RESULTADO: Disco creado")
 							} else {
-								fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DISK")
+								fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DSK")
 							}
 						} else {
 							fmt.Println("RESULTADO: Error en el nombre del disco a crear")
@@ -352,12 +354,12 @@ func comandoRmdisk(comando string) {
 					_, err := os.Stat(pathActual)
 					if err == nil {
 						sName := strings.Split(pathActual, ".")
-						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
+						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
 							//Aqui mando a borrar el disco
 							removerDisco(pathActual)
 							fmt.Println("RESULTADO: Disco eliminado")
 						} else {
-							fmt.Println("RESULTADO: Solo se pueden eliminar discos con extension .DISK")
+							fmt.Println("RESULTADO: Solo se pueden eliminar discos con extension .DSK")
 						}
 					} else {
 						//no existe el archivo solicitado
@@ -725,7 +727,66 @@ func comandoUnmount(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo4.mia
+/**************************************************************
+	COMANDO MKFS
+***************************************************************/
+func comandoMKFS(comando string) {
+	if strings.Compare(comando, "") != 0 {
+		fmt.Println("EJECUTANDO: " + comando)
+		s := strings.Split(comando, " -")
+		addCounter := 0
+		idFormatear := ""
+		tipoFormato := ""
+		tipoAdd := ""
+		tamAdd := 0
+		unitMkfs := ""
+		if len(s) > 1 {
+			for i := 1; i < len(s); i++ {
+				s2 := strings.Split(strings.ToLower(strings.TrimSpace(s[i])), "->")
+				if len(s2) > 1 {
+					switch strings.ToLower(s2[0]) {
+					case "id":
+						idFormatear = strings.ToLower(strings.TrimSpace(s2[1]))
+					case "type":
+						tipoFormato = atributoTypeFormat(strings.ToLower(strings.TrimSpace(s2[1])))
+					case "add":
+						addCounter = 1
+						tipoAdd, tamAdd = atributoAdd(strings.ToLower(strings.TrimSpace(s2[1])))
+					case "unit":
+						unitMkfs = atributoUnitParticion(strings.ToLower(strings.TrimSpace(s2[1])))
+					}
+				}
+			}
+			if addCounter == 1 {
+				//es un add
+				fmt.Println(tamAdd)
+			} else {
+				//no es format
+				if strings.Compare(tipoAdd, "") == 0 {
+					if strings.Compare(unitMkfs, "") == 0 {
+						if strings.Compare(idFormatear, "") != 0 {
+							if strings.Compare(tipoFormato, "error") != 0 {
+								formatear(idFormatear, tipoFormato)
+							} else {
+								fmt.Println("RESULTADO: Error en el tipo de formato a realizar")
+							}
+						} else {
+							fmt.Println("RESULTADO: Error en el ID de la particion a formatear 2")
+						}
+					} else {
+						fmt.Println("RESULTADO: Parametro no permitido para MKFS Formatear 1 ")
+					}
+				} else {
+					fmt.Println("RESULTADO: Parametro no permitido para MKFS Formatear")
+				}
+			}
+		} else {
+			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando MKFS")
+		}
+	}
+}
+
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia
 /**************************************************************
 	Atributos
 ***************************************************************/
@@ -811,7 +872,7 @@ func verificarPath(pathActual string) (int, string) {
 		_, err := os.Stat(pathActual)
 		if err == nil {
 			sName := strings.Split(pathActual, ".")
-			if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "disk") == 0 {
+			if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
 				//Si existe el disco
 				return 1, pathActual
 			}
@@ -851,4 +912,18 @@ func atributoAdd(cadena string) (string, int) {
 		return "agregar", i
 	}
 	return "error", 0
+}
+
+func atributoTypeFormat(cadena string) string {
+	if strings.Compare(cadena, "") == 1 {
+		switch strings.ToLower(strings.TrimSpace(cadena)) {
+		case "fast":
+			return "fast"
+		case "full":
+			return "full"
+		default:
+			return "error"
+		}
+	}
+	return "error"
 }

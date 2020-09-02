@@ -1,0 +1,39 @@
+#Archivo 5 - Formateo de particion
+
+#Creacion del disco 1
+mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoFormatear.dsk       
+PAUSE
+
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion1
+PaUsE
+
+#Particion 2 Extendida
+Fdisk -fit->bf -sizE->4 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion2
+PaUsE
+
+#Particion 3 Logica
+Fdisk -fit->bf -sizE->3 -unit->m -type->l -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion3
+PaUsE
+
+#montando particion 1
+mount -name->Particion1 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
+pause
+
+#montando particion 3
+mount -name->Particion3 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
+pause
+
+#Mostrando particiones montadas
+mount 
+pause
+
+#Formateando particion 1 
+mkfs -id->vda1 -type->full
+pause
+
+#Formateando particion 3
+mkfs -id->vda2 -type->fast
+pause
+
+#Final del archivo 
