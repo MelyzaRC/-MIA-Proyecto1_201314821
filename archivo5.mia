@@ -1,4 +1,4 @@
-#Archivo 5 - Formateo de particion
+COMANDO: COMANDO: COMANDO: rticion
 
 #Creacion del disco 1
 mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoFormatear.dsk       
@@ -32,8 +32,15 @@ pause
 mkfs -id->vda1 -type->full
 pause
 
+#Formateando particion 1 
+mkfs -id->vda1 -type->full
+pause
+
 #Formateando particion 3
 mkfs -id->vda2 -type->fast
+pause
+#Mostrando particiones montadas
+mount 
 pause
 
 #Final del archivo 

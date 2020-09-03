@@ -8,7 +8,7 @@
 package main
 
 /**************************************************************
-	Importaciones
+	Imports
 ***************************************************************/
 import (
 	"bytes"
@@ -357,7 +357,7 @@ func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
 						ebrLeido.Next = -1
 						escribirEbr(path, ebrLeido.Start, &ebrLeido)
 						//fmt.Print("EBR start: ")
-						fmt.Println(ebrLeido.Start)
+						//fmt.Println(ebrLeido.Start)
 						return 1
 					}
 					fmt.Println("RESULTADO: no hay espacio disponible para crear la particion logica en esta particion")

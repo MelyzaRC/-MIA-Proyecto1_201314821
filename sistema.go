@@ -11,6 +11,7 @@ package main
 	Importaciones
 ***************************************************************/
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -378,6 +379,30 @@ func desmontarParticion(letra byte, numero int64) (int, *[16]byte, *[100]byte) {
 	return 0, nil, nil
 }
 
+func desmontarParticion2(letra byte, numero int64) (int, *[16]byte, *[100]byte) {
+	for i := 0; i < len(discosMontados); i++ {
+		//buscar la letra
+		if discosMontados[i].ID != 0 { //solo va a verificar los discos que esten creados
+			discoActual := discosMontados[i]
+			if discoActual.ID == letra {
+				//se encontro el disco
+				for j := 0; j < len(discoActual.lista); j++ {
+					//buscando el numero
+					if discoActual.lista[j].ID[0] != 0 { //solo va a buscar en los que contengan
+						if int64(discoActual.lista[j].ID[3]) == numero {
+							//encontro la particion a desmontar
+							ret := discoActual.lista[j].nombre
+							ret2 := discoActual.Path
+							return 1, &ret, &ret2
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0, nil, nil
+}
+
 func actualizarEstado(path string, nombre *[16]byte) {
 	//leyendo el archivo
 	m := mbr{}
@@ -463,7 +488,7 @@ func actualizarEstado(path string, nombre *[16]byte) {
 /**************************************************************
 	FORMATEO
 ***************************************************************/
-func formatear(idFormatear string, tipoFormato string) { //convertir a megas
+func formatear(idFormatear string, tipoFormato string) {
 	var tamParticion int64
 	var inicioParticion int64
 	var tipoParticion int
@@ -475,7 +500,7 @@ func formatear(idFormatear string, tipoFormato string) { //convertir a megas
 				inputFmt := idFormatear[3:len(idFormatear)] + ""
 				idParticion := atributoSize(inputFmt)
 				if idParticion > 0 {
-					numResult, nombre, path := desmontarParticion(letra, int64(idParticion))
+					numResult, nombre, path := desmontarParticion2(letra, int64(idParticion))
 					if numResult == 1 {
 						//mandar a cambiar el estado de la particion en el mbr\
 						pathEnviar := ""
@@ -488,19 +513,51 @@ func formatear(idFormatear string, tipoFormato string) { //convertir a megas
 							}
 						}
 						pathEnviar = BytesToString(path[0:numeroEnviar])
-						fmt.Println(pathEnviar)
-						fmt.Println(nombre)
+						//fmt.Println(pathEnviar)
+						//fmt.Println(nombre)
 						tipoParticion, inicioParticion, tamParticion = obtenerDatosParticion(pathEnviar, *nombre)
 						if tipoParticion == 0 {
 							fmt.Println("RESULTADO: No se encuentra la particion")
 						} else if tipoParticion == 3 {
 							fmt.Println("RESULTADO: No se puede formatear una particion extendida")
 						} else if tipoParticion == 1 || tipoParticion == 2 {
-							realizarFormato(pathEnviar, inicioParticion, tamParticion)
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+							} else if estadoActual == 0 {
+								//no esta formateada
+								resultado := realizarFormato(pathEnviar, inicioParticion, tamParticion, tipoFormato)
+								if resultado == 1 {
+									actualizarEstadoFormato(letra, int64(idParticion))
+									fmt.Print("RESULTADO: Particion formateada con exito")
+								}
+							} else if estadoActual == 1 {
+								//ya esta formateada pedir confirmacion
+								fmt.Println("*****  ATENCION! LA PARTICION SE ENCUENTRA FORMATEADA   *****")
+								fmt.Println("       Desea formatear 1) SI 2) NO : ")
+								lector := bufio.NewReader(os.Stdin)
+								comando, _ := lector.ReadString('\n')
+								if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
+									//si formatear
+									resultado := realizarFormato(pathEnviar, inicioParticion, tamParticion, tipoFormato)
+									if resultado == 1 {
+										actualizarEstadoFormato(letra, int64(idParticion))
+										fmt.Print("RESULTADO: Particion formateada con exito")
+									}
+								} else if strings.Compare(comando, "2") == 0 {
+									//no formatear
+									fmt.Println("RESULTADO: La particion no ha sido formateada")
+								} else {
+									//error en opcion ingresada
+									fmt.Println("RESULTADO: Se ha ingresado una opcion incorrecta, la particion no se ha formateado")
+								}
+
+							}
 						}
 					}
 				} else {
-					fmt.Println("RESULTADO: Error en el id de la particion a desmontar")
+					fmt.Println("RESULTADO: Error en el id de la particion a formatear")
 				}
 			} else {
 				fmt.Println("RESULTADO: El formato del ID de la particion es incorrecto")
@@ -508,6 +565,52 @@ func formatear(idFormatear string, tipoFormato string) { //convertir a megas
 		}
 	}
 
+}
+
+func getEstadoFormato(letra byte, numero int64) int {
+	for i := 0; i < len(discosMontados); i++ {
+		//buscar la letra
+		if discosMontados[i].ID != 0 { //solo va a verificar los discos que esten creados
+			discoActual := discosMontados[i]
+			if discoActual.ID == letra {
+				//se encontro el disco
+				for j := 0; j < len(discoActual.lista); j++ {
+					//buscando el numero
+					if discoActual.lista[j].ID[0] != 0 { //solo va a buscar en los que contengan
+						if int64(discoActual.lista[j].ID[3]) == numero {
+							//encontro la particion a desmontar
+							return int(discoActual.lista[j].EstadoFormato)
+						}
+					}
+				}
+				break
+			}
+		}
+	}
+	return 5
+}
+
+func actualizarEstadoFormato(letra byte, numero int64) {
+	for i := 0; i < len(discosMontados); i++ {
+		//buscar la letra
+		if discosMontados[i].ID != 0 { //solo va a verificar los discos que esten creados
+			discoActual := discosMontados[i]
+			if discoActual.ID == letra {
+				//se encontro el disco
+				for j := 0; j < len(discoActual.lista); j++ {
+					//buscando el numero
+					if discoActual.lista[j].ID[0] != 0 { //solo va a buscar en los que contengan
+						if int64(discoActual.lista[j].ID[3]) == numero {
+							//encontro la particion a desmontar
+							discosMontados[i].lista[j].EstadoFormato = 1
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+	fmt.Println("RESULTADO: No se ha encontrado la particion especificada")
 }
 
 func obtenerDatosParticion(path string, nombre [16]byte) (int, int64, int64) {
@@ -587,7 +690,7 @@ func obtenerDatosParticion(path string, nombre [16]byte) (int, int64, int64) {
 	return 0, 0, 0
 }
 
-func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
+func realizarFormato(path string, inicioParticion int64, tamParticion int64, tipo string) int {
 
 	//datos para formula
 	var tamAVD int64 = int64(unsafe.Sizeof(avd{}))
@@ -600,12 +703,16 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
 	//formula
 	var nEstructuras = (tamParticion - (2 * tamSuperBloque)) / (27 + tamAVD + tamDD + (5*tamInodo + (20 * tamBloque) + tamBitacora))
 
+	if nEstructuras <= 0 {
+		fmt.Print("RESULTADO: Espacio insuficiente para formatear la particion")
+		return 0
+	}
 	//cantidad de tipos de estructura
 	cantidadAVD := nEstructuras
 	cantidadDD := nEstructuras
 	cantidadInodos := 5 * nEstructuras
 	cantidadBloques := 20 * nEstructuras
-	//cantidadBitacoras := nEstructuras
+	cantidadBitacoras := nEstructuras
 
 	inicioSuperBloque := inicioParticion
 	iniciobitmapAVD := inicioParticion + tamSuperBloque
@@ -617,7 +724,7 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
 	iniciobitmapBloque := inicioinodos + (tamInodo * cantidadInodos)
 	iniciobloques := iniciobitmapBloque + cantidadBloques
 	iniciobitacora := iniciobloques + (tamBloque * cantidadBloques)
-	//iniciocopiaSB := iniciobitacora + (tamBitacora * cantidadBitacoras)
+	iniciocopiaSB := iniciobitacora + (tamBitacora * cantidadBitacoras)
 	//finalparticion := iniciocopiaSB + tamSuperBloque
 
 	/*
@@ -661,13 +768,12 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
 		fmt.Println(finalparticion)
 	*/
 	//abriendo el archivo
-	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	file, err := os.OpenFile(strings.ReplaceAll(path, "\"", ""), os.O_RDWR, os.ModeAppend)
 	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
-		return
+		return 0
 	}
-
 	//formando el superbloque
 	nuevoSB := superbloque{}
 	//nuevoSB.NombreHD
@@ -680,7 +786,7 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
 	nuevoSB.InodosFree = cantidadInodos
 	nuevoSB.BloquesFree = cantidadBloques
 	nuevoSB.DateCreacion = getFechaHora()
-	nuevoSB.DateUltimoMontaje = getFechaHora()
+	nuevoSB.DateUltimoMontaje = nuevoSB.DateCreacion
 	nuevoSB.MontajesCount = 1
 	nuevoSB.InicioBMAV = iniciobitmapAVD
 	nuevoSB.InicioAV = inicioAVD
@@ -701,12 +807,131 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64) {
 	nuevoSB.PrimerLibreBloque = iniciobitmapBloque
 	nuevoSB.MagicNum = 201314821
 
+	pos := inicioParticion
+
 	/*Escribiendo el superbloque*/
-	file.Seek(inicioSuperBloque, 0)
+	pos = inicioSuperBloque
+	file.Seek(pos, 0)
 	var binario bytes.Buffer
 	binary.Write(&binario, binary.BigEndian, nuevoSB)
 	writeNextBytes(file, binario.Bytes())
 
+	/*Escribiendo bitmap de avd*/
+	pos = iniciobitmapAVD
+	for i := 0; i < int(cantidadAVD); i++ {
+		file.Seek(pos, 0)
+		var vacio byte = '0'
+		s := &vacio
+		var binario2 bytes.Buffer
+		binary.Write(&binario2, binary.BigEndian, s)
+		writeNextBytes(file, binario2.Bytes())
+		pos = pos + int64(unsafe.Sizeof(vacio))
+	}
+	/*Escribiendo bitmap de dd*/
+	pos = iniciobitmapDD
+	for i := 0; i < int(cantidadDD); i++ {
+		file.Seek(pos, 0)
+		var vacio byte = '0'
+		s := &vacio
+		var binario2 bytes.Buffer
+		binary.Write(&binario2, binary.BigEndian, s)
+		writeNextBytes(file, binario2.Bytes())
+		pos = pos + int64(unsafe.Sizeof(vacio))
+	}
+
+	/*Escribiendo bitmap de inodos*/
+	pos = iniciobitMapInodo
+	for i := 0; i < int(cantidadInodos); i++ {
+		file.Seek(pos, 0)
+		var vacio byte = '0'
+		s := &vacio
+		var binario2 bytes.Buffer
+		binary.Write(&binario2, binary.BigEndian, s)
+		writeNextBytes(file, binario2.Bytes())
+		pos = pos + int64(unsafe.Sizeof(vacio))
+	}
+
+	/*Escribiendo bitmap de bloques*/
+	pos = iniciobitmapBloque
+	for i := 0; i < int(cantidadBloques); i++ {
+		file.Seek(pos, 0)
+		var vacio byte = '0'
+		s := &vacio
+		var binario2 bytes.Buffer
+		binary.Write(&binario2, binary.BigEndian, s)
+		writeNextBytes(file, binario2.Bytes())
+		pos = pos + int64(unsafe.Sizeof(vacio))
+	}
+
+	/*Escribiendo bitacora*/
+	pos = iniciobitacora
+	for i := 0; i < int(cantidadBitacoras); i++ {
+		file.Seek(pos, 0)
+		bitacoraVacio := bitacora{}
+		s := &bitacoraVacio
+		var binario2 bytes.Buffer
+		binary.Write(&binario2, binary.BigEndian, s)
+		writeNextBytes(file, binario2.Bytes())
+		pos = pos + int64(unsafe.Sizeof(bitacora{}))
+	}
+
+	/*Escribiendo copia del SB*/
+	pos = iniciocopiaSB
+	file.Seek(pos, 0)
+	var binario2 bytes.Buffer
+	binary.Write(&binario2, binary.BigEndian, &nuevoSB)
+	writeNextBytes(file, binario2.Bytes())
+
+	if strings.Compare(tipo, "full") == 0 {
+		/*Escribiendo avd*/
+		pos = inicioAVD
+		for i := 0; i < int(cantidadAVD); i++ {
+			file.Seek(pos, 0)
+			avdVacio := avd{}
+			s := &avdVacio
+			var binario2 bytes.Buffer
+			binary.Write(&binario2, binary.BigEndian, s)
+			writeNextBytes(file, binario2.Bytes())
+			pos = pos + int64(unsafe.Sizeof(avd{}))
+		}
+
+		/*Escribiendo dd*/
+		pos = inicioDD
+		for i := 0; i < int(cantidadDD); i++ {
+			file.Seek(pos, 0)
+			ddVacio := dd{}
+			s := &ddVacio
+			var binario2 bytes.Buffer
+			binary.Write(&binario2, binary.BigEndian, s)
+			writeNextBytes(file, binario2.Bytes())
+			pos = pos + int64(unsafe.Sizeof(dd{}))
+		}
+
+		/*Escribiendo inodos*/
+		pos = inicioinodos
+		for i := 0; i < int(cantidadInodos); i++ {
+			file.Seek(pos, 0)
+			inodoVacio := inodo{}
+			s := &inodoVacio
+			var binario2 bytes.Buffer
+			binary.Write(&binario2, binary.BigEndian, s)
+			writeNextBytes(file, binario2.Bytes())
+			pos = pos + int64(unsafe.Sizeof(inodo{}))
+		}
+
+		/*Escribiendo bloques*/
+		pos = iniciobloques
+		for i := 0; i < int(cantidadBloques); i++ {
+			file.Seek(pos, 0)
+			bloqueVacio := bloque{}
+			s := &bloqueVacio
+			var binario2 bytes.Buffer
+			binary.Write(&binario2, binary.BigEndian, s)
+			writeNextBytes(file, binario2.Bytes())
+			pos = pos + int64(unsafe.Sizeof(bloque{}))
+		}
+	}
+	return 1
 }
 
 func getFechaHora() [16]byte {
