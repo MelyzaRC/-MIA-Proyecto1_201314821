@@ -42,7 +42,7 @@ import (
 /**************************************************************
 	Grafica la estructura del disco
 ***************************************************************/
-func graficarDISCO(path string) {
+func graficarDISCO(path string, pathDestino string, nombreDestino string, formatoDestino string) {
 	contenido := "digraph G {\n" +
 		"label = \"Estructura del disco\"\n" +
 		"a0[label=<\n" +
@@ -156,13 +156,13 @@ func graficarDISCO(path string) {
 		"> shape = \"rectangle\" fontcolor = \"black\"];\n" +
 		"}\n"
 	//escribir el archivo formado
-	escribirDot(1, contenido)
+	escribirDot(1, contenido, pathDestino, nombreDestino, formatoDestino)
 }
 
 /**************************************************************
 	Grafica del MBR
 ***************************************************************/
-func graficarMBR(path string) {
+func graficarMBR(path string, pathDestino string, nombreDestino string, formatoDestino string) {
 	contenido := "digraph G {\n" +
 		"label = \"Reporte de MBR\"\n" +
 		"a0[label=<\n" +
@@ -260,7 +260,6 @@ func graficarMBR(path string) {
 									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Next)) + "</font></TD></TR>\n"
 									//fit claro
 									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_fit</font></TD>\n"
-									fmt.Println(ebrLeido.Fit)
 									switch ebrLeido.Fit {
 									case 'f':
 										contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + "f" + "</font></TD></TR>\n"
@@ -313,13 +312,13 @@ func graficarMBR(path string) {
 		"> shape = \"rectangle\" fontcolor = \"black\"];\n" +
 		"}\n"
 	//escribir el archivo formado
-	escribirDot(2, contenido)
+	escribirDot(2, contenido, pathDestino, nombreDestino, formatoDestino)
 }
 
 /**************************************************************
 	Graficar superbloque
 ***************************************************************/
-func graficarSB(path string, inicioParticion int64) {
+func graficarSB(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
 	sbTemp := superbloque{}
 	numDetener := 0
 	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
@@ -478,32 +477,32 @@ func graficarSB(path string, inicioParticion int64) {
 			"> shape = \"rectangle\" fontcolor = \"black\"];\n" +
 			"}\n"
 		//escribir el archivo formado
-		escribirDot(3, contenido)
+		escribirDot(3, contenido, pathDestino, nombreDestino, formatoDestino)
 	}
 }
 
 /**************************************************************
 	Metodo graficar general
 ***************************************************************/
-func graficar(arg3 string, arg5 string) {
+func graficar(arg3 string, arg5 string, formato string) {
 	arg0 := "/usr/bin/dot"
-	arg1 := "-Tpng"
+	arg1 := "-T" + formato
 	arg4 := "-o"
 	out := exec.Command(arg0, arg1, arg3, arg4, arg5)
 	out.Run()
 }
 
-func escribirDot(tipo int, contenido string) {
+func escribirDot(tipo int, contenido string, pathDestino string, nombreDestino string, formatoDestino string) {
 	switch tipo {
 	case 1:
 		crearArchivo("reportes/disco.dot", contenido)
-		graficar("reportes/disco.dot", "reportes/disco.png")
+		graficar("reportes/disco.dot", pathDestino+"/"+nombreDestino+"."+formatoDestino, formatoDestino)
 	case 2:
 		crearArchivo("reportes/mbr.dot", contenido)
-		graficar("reportes/mbr.dot", "reportes/mbr.png")
+		graficar("reportes/mbr.dot", pathDestino+"/"+nombreDestino+"."+formatoDestino, formatoDestino)
 	case 3:
 		crearArchivo("reportes/superbloque.dot", contenido)
-		graficar("reportes/superbloque.dot", "reportes/superbloque.png")
+		graficar("reportes/superbloque.dot", pathDestino+"/"+nombreDestino+"."+formatoDestino, formatoDestino)
 	default:
 	}
 }

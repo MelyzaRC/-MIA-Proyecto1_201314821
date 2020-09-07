@@ -55,7 +55,7 @@ func montarParticion(path string, nombre string) int {
 				if subirParticion(&nueva, &nuevoDisco) == 1 {
 					mbrLeido.Tabla[i].Status = 1
 					reescribir(mbrLeido, path)
-					graficarMBR(path)
+					//graficarMBR(path)
 					return 1
 				}
 				return 0
@@ -1002,7 +1002,7 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 		}
 	}
 	/*Crear la carpeta raiz*/
-	graficarSB(path, inicioParticion)
+	//graficarSB(path, inicioParticion)
 	return 1
 }
 

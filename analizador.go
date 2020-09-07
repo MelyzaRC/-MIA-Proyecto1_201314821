@@ -891,13 +891,13 @@ func comandoRep(comando string) {
 				if len(s2) > 1 {
 					switch strings.ToLower(strings.TrimSpace(s2[0])) {
 					case "path":
-						path = strings.TrimSpace(s2[1])
+						path = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
 					case "id":
-						id = strings.TrimSpace(s2[1])
+						id = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
 					case "ruta":
-						ruta = strings.TrimSpace(s2[1])
+						ruta = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
 					case "nombre":
-						nombre = strings.TrimSpace(s2[1])
+						nombre = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
 					default:
 						fmt.Println("RESULTADO: No se reconoce el parametro " + s2[0] + " para el comando REP")
 						return
@@ -905,6 +905,43 @@ func comandoRep(comando string) {
 				}
 			}
 			/*revisar los parametros */
+			if strings.Compare(nombre, "") != 0 {
+				//nombre ok
+				if strings.Compare(path, "") != 0 {
+					//path ok
+					if strings.Compare(id, "") != 0 {
+						//id ok
+						switch strings.ToLower(strings.TrimSpace(nombre)) {
+						case "mbr":
+							reporteMBR(path, id)
+						case "disk":
+							reporteDisk(path, id)
+						case "sb":
+							reporteSB(path, id)
+						case "bm_arbdir":
+						case "bm_detdir":
+						case "bm_inode":
+						case "bm_block":
+						case "bitacora":
+						case "directorio":
+						case "tree_file":
+						case "tree_directorio":
+						case "tree_complete":
+						case "ls":
+						default:
+							fmt.Println("RESULTADO: No se reconoce el tipo de reporte a realizar")
+							fmt.Println(ruta)
+							return
+						}
+					} else {
+						fmt.Println("RESULTADO: Debe ingresar el id de la particion")
+					}
+				} else {
+					fmt.Println("RESULTADO: Debe ingresar el path del en el que se guardara el reporte")
+				}
+			} else {
+				fmt.Println("RESULTADO: Debe ingresar el nombre del reporte a realizar")
+			}
 		} else {
 			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando REP")
 		}

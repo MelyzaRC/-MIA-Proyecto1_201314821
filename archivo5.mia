@@ -1,41 +1,26 @@
-COMANDO: COMANDO: COMANDO: rticion
-
 #Creacion del disco 1
+
 mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoFormatear.dsk       
 PAUSE
-#Particion 2 Extendida
-Fdisk -fit->bf -sizE->3 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion2
-PaUsE
-#Particion 1 Primaria
-Fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion1
-PaUsE
 
-#Particion 1 Primaria
-Fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion3
+#Particion 2 Extendida
+Fdisk -fit->bf -sizE->5 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion2
 PaUsE
 
 #Particion 4
-Fdisk -fit->bf -sizE->100 -unit->k -type->l -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion4
+Fdisk -fit->bf -sizE->3 -unit->m -type->l -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion4
 PaUsE
 
-
-
-
-
-#montando particion 1
-mount -name->Particion1 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
+#montando particion 4
+mount -name->Particion4 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
 pause
 
 #Mostrando particiones montadas
 mount 
 pause
 
-#Formateando particion 1 
+#Formateando particion 4 
 mkfs -id->vda1 -type->full
-pause
-
-#Mostrando particiones montadas
-mount 
 pause
 
 #creando un directorio 
@@ -43,7 +28,9 @@ mkdir -p -id->vda1 -path->"/holis"
 pause
 
 #creando reportes 
-rep -nombre->disk -path->"/home/user/reports/reporte2.pdf" -id->vda2 
+rep -nombre->disk -path->"/home/reports/reporteDISCO.pdf" -id->vda1 
+rep -nombre->mbr -path->"/home/reports/reporteMBR.png" -id->vda1 
+rep -nombre->sb -path->"/home/reports/reporteSuperBloque.jpg" -id->vda1 
 pause 
 
 #Final del archivo 

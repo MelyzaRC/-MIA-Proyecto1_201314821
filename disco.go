@@ -112,8 +112,8 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 				/******************************************************************/
 				//fmt.Println(disco)
 				fmt.Println("RESULTADO: Particion creada con exito")
-				graficarMBR(path)
-				graficarDISCO(path)
+				//graficarMBR(path)
+				//graficarDISCO(path)
 			} /*else {
 				fmt.Println("RESULTADO: No se ha podido crear la particion")
 			}*/
@@ -170,8 +170,8 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 				/******************************************************************/
 				//fmt.Println(disco)
 				fmt.Println("RESULTADO: Particion creada con exito")
-				graficarMBR(path)
-				graficarDISCO(path)
+				//graficarMBR(path)
+				//graficarDISCO(path)
 			} /*else {
 				fmt.Println("RESULTADO: No se ha podido crear la particion")
 			}*/
@@ -572,9 +572,9 @@ func crearDisco(tam int, unit string, ruta string) {
 	var binario3 bytes.Buffer
 	binary.Write(&binario3, binary.BigEndian, disco)
 	writeNextBytes(archivo, binario3.Bytes())
-	path := ruta
-	graficarDISCO(path)
-	graficarMBR(path)
+	//path := ruta
+	//graficarDISCO(path)
+	//graficarMBR(path)
 }
 
 func writeNextBytes(file *os.File, bytes []byte) {
@@ -616,8 +616,8 @@ func eliminarParticion(path string, nombre string, tipo string) {
 						s.Tabla[i] = particionVacia
 						reordenarParticiones(s)
 						reescribir(s, path)
-						graficarMBR(path)
-						graficarDISCO(path)
+						//graficarMBR(path)
+						//graficarDISCO(path)
 					} else if strings.Compare(tipo, "full") == 0 {
 						h := s.Tabla[i].Start
 						h2 := s.Tabla[i].Size
@@ -628,8 +628,8 @@ func eliminarParticion(path string, nombre string, tipo string) {
 
 						borrarFullParticion(path, h, h2)
 
-						graficarMBR(path)
-						graficarDISCO(path)
+						//graficarMBR(path)
+						//graficarDISCO(path)
 					}
 					eliminado = 1
 
@@ -731,8 +731,8 @@ func eliminarParticion(path string, nombre string, tipo string) {
 			}
 		}
 		if eliminado == 1 {
-			graficarMBR(path)
-			graficarDISCO(path)
+			//graficarMBR(path)
+			//graficarDISCO(path)
 			fmt.Println("RESULTADO: Se ha eliminado correctamente la particion")
 		} else {
 			fmt.Println("RESULTADO: No se ha podido eliminar la particion")
@@ -945,8 +945,8 @@ func modificarParticion(path string, nombre string, tam int64, tipo string) {
 		if modificado == 1 {
 			fmt.Println("RESULTADO: Se ha modificado el tamano de la particion")
 			reescribir(s, path)
-			graficarMBR(path)
-			graficarDISCO(path)
+			//graficarMBR(path)
+			//graficarDISCO(path)
 		}
 	}
 }
