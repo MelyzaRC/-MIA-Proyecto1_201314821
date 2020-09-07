@@ -111,6 +111,10 @@ func analizar(comando string) {
 			comandoUnmount(comando)
 		case "mkfs":
 			comandoMKFS(comando)
+		case "mkdir":
+			comandoMKDIR(comando)
+		case "rep":
+			comandoRep(comando)
 		default:
 			fmt.Println("La instruccion " + s[0] + " no se reconoce")
 		}
@@ -759,7 +763,31 @@ func comandoMKFS(comando string) {
 			}
 			if addCounter == 1 {
 				//es un add
-				fmt.Println(tamAdd)
+				if strings.Compare(tipoAdd, "") == 0 || strings.Compare(tipoAdd, "error") == 0 {
+					fmt.Println("RESULTADO: Error en el comando MKFS ADD")
+				} else {
+					if tamAdd <= 0 {
+						fmt.Println("RESULTADO: Error en la cantidad a modificar en el comando MKFS ADD")
+					} else {
+						if strings.Compare(unitMkfs, "error") == 0 {
+							fmt.Println("RESULTADO: Error en la unidad del comando MKFS ADD")
+						} else {
+							switch unitMkfs {
+							case "m":
+								tamAdd = tamAdd * 1024 * 1024
+							case "k":
+							case "b":
+								tamAdd = tamAdd * 1024
+							}
+							if strings.Compare(idFormatear, "") == 0 {
+								fmt.Println("RESULTADO: En el id a modificar en el comando MKFS ADD")
+							} else {
+								//todo esta bien
+								mkfsAdd(idFormatear, int64(tamAdd), tipoAdd)
+							}
+						}
+					}
+				}
 			} else {
 				//no es format
 				if strings.Compare(tipoAdd, "") == 0 {
@@ -786,7 +814,105 @@ func comandoMKFS(comando string) {
 	}
 }
 
+func mkfsAdd(idParticion string, tamAdd int64, tipoAdd string) {
+}
+
+/**************************************************************
+	COMANDO MKDIR
+	Obligatorios
+		-id (de la particion ya formateada)
+		-path (DE LA CARPETA A CREAR)
+	Opcional
+		-p crear padres
+***************************************************************/
+func comandoMKDIR(comando string) {
+	fmt.Println("EJECUTANDO: " + comando)
+	if strings.Compare(comando, "") != 0 {
+		s := strings.Split(comando, " -")
+		atribP := 0
+		atribPath := ""
+		atribID := ""
+		if len(s) > 2 {
+			for i := 1; i < len(s); i++ {
+				s2 := strings.Split(s[i], "->")
+				if len(s2) > 0 {
+					if len(s2) == 1 {
+						//parametro p
+						atribP = 1
+					} else if len(s2) > 1 {
+						switch strings.ToLower(strings.TrimSpace(s2[0])) {
+						case "id":
+							atribID = strings.ToLower(strings.TrimSpace(s2[1]))
+						case "path":
+							atribPath = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
+						default:
+							fmt.Println("RESULTADO: Parametro no permitido para el comando MKDIR")
+							return
+						}
+					}
+				}
+			}
+			/*fmt.Println(atribP)
+			fmt.Println(atribPath)
+			fmt.Println(atribId)*/
+			if strings.Compare(atribPath, "") != 0 {
+				if strings.Compare(atribID, "") != 0 {
+					crearDirectorio(atribID, atribPath, atribP)
+				} else {
+					fmt.Println("RESULTADO: Debe ingresar el id de la particion en la que desea crear la carpeta")
+					return
+				}
+			} else {
+				fmt.Println("RESULTADO: Debe ingresar la ruta de la carpeta a crear")
+				return
+			}
+		} else {
+			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando MKDIR")
+		}
+	}
+}
+
 ///exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia
+
+/**************************************************************
+	COMANDO REP
+***************************************************************/
+func comandoRep(comando string) {
+	fmt.Println("EJECUTANDO: " + comando)
+	id := ""
+	path := ""
+	ruta := ""
+	nombre := ""
+	if strings.Compare(comando, "") != 0 {
+		s := strings.Split(comando, " -")
+		if len(s) > 3 {
+			for i := 1; i < len(s); i++ { //[0] = rep
+				s2 := strings.Split(s[i], "->")
+				if len(s2) > 1 {
+					switch strings.ToLower(strings.TrimSpace(s2[0])) {
+					case "path":
+						path = strings.TrimSpace(s2[1])
+					case "id":
+						id = strings.TrimSpace(s2[1])
+					case "ruta":
+						ruta = strings.TrimSpace(s2[1])
+					case "nombre":
+						nombre = strings.TrimSpace(s2[1])
+					default:
+						fmt.Println("RESULTADO: No se reconoce el parametro " + s2[0] + " para el comando REP")
+						return
+					}
+				}
+			}
+			/*revisar los parametros */
+		} else {
+			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando REP")
+		}
+	}
+}
+
+//exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia
+
 /**************************************************************
 	Atributos
 ***************************************************************/

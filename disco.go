@@ -102,10 +102,10 @@ func crearParticion(path string, size int, unit string, name string, tipo string
 					if err != nil {
 						log.Fatal(err)
 					} else {
-						file.Seek(nueva.Start, 0)
+						file.Seek(ebrVacio.Start, 0)
 						//Escribiendo el MBR
 						var binario3 bytes.Buffer
-						binary.Write(&binario3, binary.BigEndian, ebrVacio)
+						binary.Write(&binario3, binary.BigEndian, &ebrVacio)
 						writeNextBytes(file, binario3.Bytes())
 					}
 				}

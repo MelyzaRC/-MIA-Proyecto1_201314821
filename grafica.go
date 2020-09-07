@@ -212,11 +212,11 @@ func graficarMBR(path string) {
 				//name oscuro
 				numDetener := 0
 				for indice := 0; indice < len(particionActual.Name); indice++ {
-					if particionActual.Name[indice] == 0 {
+					if particionActual.Name[indice] != 0 {
 						numDetener = indice
-						break
 					}
 				}
+				numDetener = numDetener + 1
 				contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_name</font></TD>\n"
 				contenido = contenido + "<TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + BytesToString(particionActual.Name[:numDetener]) + "</font></TD></TR>\n"
 
@@ -237,58 +237,70 @@ func graficarMBR(path string) {
 					}
 					limite := particionActual.Start + int64(unsafe.Sizeof(ebr{})) + particionActual.Size
 					if &ebrTemp != nil {
-						for i := ebrTemp.Start; i < limite; i++ {
-							ebrLeido := ebr{}
-							file.Seek(i, 0)
-							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
-							buffer := bytes.NewBuffer(data)
-							err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
-							if err != nil {
-								log.Fatal("binary.Read failed", err)
-							}
-							if &ebrLeido != nil {
-								//titulo de tabla
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#4A235A\" width=\"250\" cellpadding=\"7\" align=\"left\"><font color=\"#FFFFFF\" face=\"Calibri\"><b>Particion Logica</b></font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#4A235A\" width=\"200\" cellpadding=\"7\"></TD></TR>\n"
+						if ebrTemp.Size > 0 {
+							for i := ebrTemp.Start; i < limite; i++ {
+								ebrLeido := ebr{}
+								file.Seek(i, 0)
+								data := readNextBytes(file, unsafe.Sizeof(ebr{}))
+								buffer := bytes.NewBuffer(data)
+								err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+								if err != nil {
+									log.Fatal("binary.Read failed", err)
+								}
+								if &ebrLeido != nil {
+									//titulo de tabla
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#F08080\" width=\"250\" cellpadding=\"7\" align=\"left\"><font color=\"#FFFFFF\" face=\"Calibri\"><b>Particion Logica</b></font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F08080\" width=\"200\" cellpadding=\"7\"></TD></TR>\n"
 
-								//status claro
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_status</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Status)) + "</font></TD></TR>\n"
-								//type oscuro
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_next</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Next)) + "</font></TD></TR>\n"
-								//fit claro
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_fit</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + string(ebrLeido.Fit) + "</font></TD></TR>\n"
-								//start oscuro
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_start</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Start)) + "</font></TD></TR>\n"
-								//size claro
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_size</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Size)) + "</font></TD></TR>\n"
-								//name oscuro
-								numDetener := 0
-								for indice := 0; indice < len(ebrLeido.Name); indice++ {
-									if ebrLeido.Name[indice] == 0 {
-										numDetener = indice
-										break
+									//status claro
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_status</font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Status)) + "</font></TD></TR>\n"
+									//type oscuro
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_next</font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Next)) + "</font></TD></TR>\n"
+									//fit claro
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_fit</font></TD>\n"
+									fmt.Println(ebrLeido.Fit)
+									switch ebrLeido.Fit {
+									case 'f':
+										contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + "f" + "</font></TD></TR>\n"
+									case 'b':
+										contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + "b" + "</font></TD></TR>\n"
+									case 'w':
+										contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + "w" + "</font></TD></TR>\n"
+									default:
+										contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + "0" + "</font></TD></TR>\n"
+									}
+									//start oscuro
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_start</font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Start)) + "</font></TD></TR>\n"
+									//size claro
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_size</font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#FFFFFF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + strconv.Itoa(int(ebrLeido.Size)) + "</font></TD></TR>\n"
+									//name oscuro
+									numDetener := 0
+									for indice := 0; indice < len(ebrLeido.Name); indice++ {
+										if ebrLeido.Name[indice] != 0 {
+											numDetener = indice
+										}
+									}
+									numDetener = numDetener + 1
+									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_name</font></TD>\n"
+									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F5B7B1\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + BytesToString(ebrLeido.Name[:numDetener]) + "</font></TD></TR>\n"
+
+									if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
+										i = ebrLeido.Next - 1
+									} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
+										i = limite + 1
+									} else if ebrLeido.Next == -1 { //lego al utimo ebr
+										i = limite + 1
+									} else if ebrLeido.Next != -1 { //esta en los ebr antes del ultimo
+										//porque al iterar el for le suma uno
+										i = ebrLeido.Next - 1
 									}
 								}
-								contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\"><font color=\"#000000\" face=\"Calibri\">part_name</font></TD>\n"
-								contenido = contenido + "<TD border=\"0\" bgcolor=\"#E8DAEF\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"#000000\" face=\"Calibri\">" + BytesToString(ebrLeido.Name[:numDetener]) + "</font></TD></TR>\n"
 
-								if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
-									i = ebrLeido.Next - 1
-								} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
-									i = limite + 1
-								} else if ebrLeido.Next == -1 { //lego al utimo ebr
-									i = limite + 1
-								} else if ebrLeido.Next != -1 { //esta en los ebr antes del ultimo
-									//porque al iterar el for le suma uno
-									i = ebrLeido.Next - 1
-								}
 							}
-
 						}
 					}
 				}
@@ -302,6 +314,172 @@ func graficarMBR(path string) {
 		"}\n"
 	//escribir el archivo formado
 	escribirDot(2, contenido)
+}
+
+/**************************************************************
+	Graficar superbloque
+***************************************************************/
+func graficarSB(path string, inicioParticion int64) {
+	sbTemp := superbloque{}
+	numDetener := 0
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+
+		colorClaro := "#FFFFFF"
+		colorTitulo := "#145A32"
+		colorOscuro := "#27AE60"
+		contenido := "digraph G {\n" +
+			"label = \"Reporte de SUPERBLOQUE\"\n" +
+			"a0[label=<\n" +
+			"<TABLE border=\"1\" cellspacing=\"0\" cellpadding=\"5\" bgcolor=\"#145A32\">\n"
+		/*Titulo de la tabla*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorTitulo + "\" width=\"250\" cellpadding=\"7\" align=\"left\"><font color=\"#FFFFFF\" face=\"Calibri\"><b>Reporte de SUPERBLOQUE</b></font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorTitulo + "\" width=\"200\" cellpadding=\"7\"></TD></TR>\n"
+
+		/*nombre claro*/
+		numDetener = 0
+		for indice := 0; indice < len(sbTemp.NombreHD); indice++ {
+			if sbTemp.NombreHD[indice] != 0 {
+				numDetener = indice
+			}
+		}
+		numDetener = numDetener + 1
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_nombre_hd</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + BytesToString(sbTemp.NombreHD[:numDetener]) + "</font></TD></TR>\n"
+		/*contador de avd*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_arbol_virtual_count</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.ArbolVirtualCount)) + "</font></TD></TR>\n"
+
+		/*contador dd claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_detalle_directorio_count</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.DetalleDirectorioCount)) + "</font></TD></TR>\n"
+		/*contador inodos oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_inodos_count</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InodosCount)) + "</font></TD></TR>\n"
+
+		/*contador bloques claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_bloques_count</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.BloquesCount)) + "</font></TD></TR>\n"
+		/*contador free avd oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_arbol_virtual_free</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.ArbolVirtualFree)) + "</font></TD></TR>\n"
+
+		/*contador dd free claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_detalle_directorio_free</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.DetalleDirectorioFree)) + "</font></TD></TR>\n"
+		/*contador inodos oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_inodos_free</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InodosFree)) + "</font></TD></TR>\n"
+
+		/*contador bloques free claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_bloques_free</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.BloquesFree)) + "</font></TD></TR>\n"
+		/*contador datecreation oscuro*/
+		numDetener = 0
+		for indice := 0; indice < len(sbTemp.DateCreacion); indice++ {
+			if sbTemp.DateCreacion[indice] != 0 {
+				numDetener = indice
+			}
+		}
+		numDetener = numDetener + 1
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_date_creacion</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + BytesToString(sbTemp.DateCreacion[:numDetener]) + "</font></TD></TR>\n"
+
+		/*ultimo montaje claro*/
+		numDetener = 0
+		for indice := 0; indice < len(sbTemp.DateUltimoMontaje); indice++ {
+			if sbTemp.DateUltimoMontaje[indice] != 0 {
+				numDetener = indice
+			}
+		}
+		numDetener = numDetener + 1
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_date_ultimo_montaje</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + BytesToString(sbTemp.DateUltimoMontaje[:numDetener]) + "</font></TD></TR>\n"
+		/*contador montajes count oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_montajes_count</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.MontajesCount)) + "</font></TD></TR>\n"
+
+		/*contador ap bitmap avd claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_bitmap_arbol_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioBMAV)) + "</font></TD></TR>\n"
+		/*contador ap_arboldirectorio oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_arbol_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioAV)) + "</font></TD></TR>\n"
+
+		/*contador ap bitmap dd claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_bitmap_detalle_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioBMDD)) + "</font></TD></TR>\n"
+		/*contador ap_dd oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_detalle_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioDD)) + "</font></TD></TR>\n"
+
+		/*contador ap bitmap inodos claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_bitmap_inodos</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioBMInodos)) + "</font></TD></TR>\n"
+		/*contador ap_inodos oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_inodos</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioInodos)) + "</font></TD></TR>\n"
+
+		/*contador ap bitmap bloques claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_bitmap_bloques</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioBMBloques)) + "</font></TD></TR>\n"
+		/*contador ap_bloques oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_bloques</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioBloques)) + "</font></TD></TR>\n"
+
+		/*ap log claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_ap_log</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.InicioLog)) + "</font></TD></TR>\n"
+
+		/*ap_size avd oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_size_struct_arbol_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(unsafe.Sizeof(avd{}))) + "</font></TD></TR>\n"
+		/*ap size dd claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_size_struct_detalle_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(unsafe.Sizeof(dd{}))) + "</font></TD></TR>\n"
+		/*ap_size inodo oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_size_struct_inodo</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(unsafe.Sizeof(inodo{}))) + "</font></TD></TR>\n"
+		/*ap size bloque claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_size_struct_bloque</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(unsafe.Sizeof(bloque{}))) + "</font></TD></TR>\n"
+
+		/*contador pimer bit arbol directorio oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_first_free_bit_arbol_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.PrimerLibreAV)) + "</font></TD></TR>\n"
+		/*dd claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_first_free_bit_detalle_directorio</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.PrimerLibreDD)) + "</font></TD></TR>\n"
+		/*inodos oscuro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_first_free_bit_tabla_inodos</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.PrimerLibreInodo)) + "</font></TD></TR>\n"
+		/*bloques claro*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\"><font color=\"" + "#000000" + "\" face=\"Calibri\">sb_first_free_bit_bloques</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorClaro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.PrimerLibreBloque)) + "</font></TD></TR>\n"
+
+		/*contador magic num*/
+		contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">sb_magic_num</font></TD>\n"
+		contenido = contenido + "<TD border=\"0\" bgcolor=\"" + colorOscuro + "\" width=\"250\" cellpadding=\"5\" align=\"left\"><font  color=\"" + "#000000" + "\" face=\"Calibri\">" + strconv.Itoa(int(sbTemp.MagicNum)) + "</font></TD></TR>\n"
+
+		//final
+		contenido = contenido +
+			"</TABLE>\n" +
+			"> shape = \"rectangle\" fontcolor = \"black\"];\n" +
+			"}\n"
+		//escribir el archivo formado
+		escribirDot(3, contenido)
+	}
 }
 
 /**************************************************************
@@ -323,6 +501,9 @@ func escribirDot(tipo int, contenido string) {
 	case 2:
 		crearArchivo("reportes/mbr.dot", contenido)
 		graficar("reportes/mbr.dot", "reportes/mbr.png")
+	case 3:
+		crearArchivo("reportes/superbloque.dot", contenido)
+		graficar("reportes/superbloque.dot", "reportes/superbloque.png")
 	default:
 	}
 }

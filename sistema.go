@@ -520,7 +520,7 @@ func formatear(idFormatear string, tipoFormato string) {
 							fmt.Println("RESULTADO: No se encuentra la particion")
 						} else if tipoParticion == 3 {
 							fmt.Println("RESULTADO: No se puede formatear una particion extendida")
-						} else if tipoParticion == 1 || tipoParticion == 2 {
+						} else if tipoParticion == 1 {
 							estadoActual := getEstadoFormato(letra, int64(idParticion))
 							if estadoActual == 5 {
 								//hay un problema
@@ -530,12 +530,12 @@ func formatear(idFormatear string, tipoFormato string) {
 								resultado := realizarFormato(pathEnviar, inicioParticion, tamParticion, tipoFormato)
 								if resultado == 1 {
 									actualizarEstadoFormato(letra, int64(idParticion))
-									fmt.Print("RESULTADO: Particion formateada con exito")
+									fmt.Println("RESULTADO: Particion formateada con exito")
 								}
 							} else if estadoActual == 1 {
 								//ya esta formateada pedir confirmacion
 								fmt.Println("*****  ATENCION! LA PARTICION SE ENCUENTRA FORMATEADA   *****")
-								fmt.Println("       Desea formatear 1) SI 2) NO : ")
+								fmt.Print("       Desea formatear 1) SI 2) NO : ")
 								lector := bufio.NewReader(os.Stdin)
 								comando, _ := lector.ReadString('\n')
 								if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
@@ -545,7 +545,42 @@ func formatear(idFormatear string, tipoFormato string) {
 										actualizarEstadoFormato(letra, int64(idParticion))
 										fmt.Print("RESULTADO: Particion formateada con exito")
 									}
-								} else if strings.Compare(comando, "2") == 0 {
+								} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
+									//no formatear
+									fmt.Println("RESULTADO: La particion no ha sido formateada")
+								} else {
+									//error en opcion ingresada
+									fmt.Println("RESULTADO: Se ha ingresado una opcion incorrecta, la particion no se ha formateado")
+								}
+
+							}
+						} else if tipoParticion == 2 {
+							//es una extendida
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+							} else if estadoActual == 0 {
+								//no esta formateada
+								resultado := realizarFormato(pathEnviar, inicioParticion+int64(unsafe.Sizeof(ebr{})), tamParticion, tipoFormato)
+								if resultado == 1 {
+									actualizarEstadoFormato(letra, int64(idParticion))
+									fmt.Println("RESULTADO: Particion formateada con exito")
+								}
+							} else if estadoActual == 1 {
+								//ya esta formateada pedir confirmacion
+								fmt.Println("*****  ATENCION! LA PARTICION SE ENCUENTRA FORMATEADA   *****")
+								fmt.Print("       Desea formatear 1) SI 2) NO : ")
+								lector := bufio.NewReader(os.Stdin)
+								comando, _ := lector.ReadString('\n')
+								if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
+									//si formatear
+									resultado := realizarFormato(pathEnviar, inicioParticion, tamParticion, tipoFormato)
+									if resultado == 1 {
+										actualizarEstadoFormato(letra, int64(idParticion))
+										fmt.Print("RESULTADO: Particion formateada con exito")
+									}
+								} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
 									//no formatear
 									fmt.Println("RESULTADO: La particion no ha sido formateada")
 								} else {
@@ -648,19 +683,24 @@ func obtenerDatosParticion(path string, nombre [16]byte) (int, int64, int64) {
 					}
 					limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size
 					if &ebrTemp != nil {
-						for j := ebrTemp.Start; j < limite; j++ {
+						//fmt.Println(ebrTemp.Start)
+						for j := s.Tabla[i].Start; j < limite; j++ {
 							ebrLeido := ebr{}
-
 							file.Seek(j, 0)
-							data := readNextBytes(file, unsafe.Sizeof(ebr{}))
-							buffer := bytes.NewBuffer(data)
-							err = binary.Read(buffer, binary.BigEndian, &ebrLeido)
+							data1 := readNextBytes(file, unsafe.Sizeof(ebr{}))
+							buffer1 := bytes.NewBuffer(data1)
+							err = binary.Read(buffer1, binary.BigEndian, &ebrLeido)
 							if err != nil {
 								log.Fatal("binary.Read failed", err)
 							}
 							if &ebrLeido != nil {
+								/*fmt.Println("Ebr leido")
+								fmt.Println(ebrLeido.Name)
+								fmt.Println("Name que viene")
+								fmt.Println(nombre)
+								fmt.Println("ebr leido next")
+								fmt.Println(ebrLeido.Next)*/
 								if ebrLeido.Next != -1 && ebrLeido.Size == 0 {
-
 									//Aqui no valuo porque es el primer EBR solo lo salto
 									j = ebrLeido.Next - 1
 								} else if ebrLeido.Next == -1 && ebrLeido.Size == 0 {
@@ -675,7 +715,10 @@ func obtenerDatosParticion(path string, nombre [16]byte) (int, int64, int64) {
 									return 0, 0, 0
 								} else if ebrLeido.Next != -1 && ebrLeido.Size > 0 { //esta en los ebr antes del ultimo
 									//verificar pero con el next
+									//fmt.Println(ebrLeido.Name)
+									//fmt.Println(nombre)
 									if ebrLeido.Name == nombre {
+
 										return 2, ebrLeido.Start, ebrLeido.Size
 									}
 									j = ebrLeido.Next - 1
@@ -776,13 +819,28 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	}
 	//formando el superbloque
 	nuevoSB := superbloque{}
-	//nuevoSB.NombreHD
+	/*Colocando nombre al superbloque*/
+	arregloNombre := strings.Split(path, "/")
+	nombreEncontrado := ""
+	for i := 0; i < len(arregloNombre); i++ {
+		if strings.Contains(strings.ToLower(arregloNombre[i]), ".dsk") {
+			nombreEncontrado = arregloNombre[i]
+			break
+		}
+	}
+	nombreEncontrado = strings.TrimSpace(nombreEncontrado)
+	if strings.Compare(nombreEncontrado, "") != 0 {
+		if len(arregloNombre) < 101 {
+			copy(nuevoSB.NombreHD[:], nombreEncontrado)
+		}
+	}
 	nuevoSB.ArbolVirtualCount = cantidadAVD
 	nuevoSB.DetalleDirectorioCount = cantidadDD
 	nuevoSB.InodosCount = cantidadInodos
 	nuevoSB.BloquesCount = cantidadBloques
-	nuevoSB.ArbolVirtualFree = cantidadAVD
-	nuevoSB.DetalleDirectorioFree = cantidadDD
+
+	nuevoSB.ArbolVirtualFree = cantidadAVD - 1     //porque se crea la carpeta raiz
+	nuevoSB.DetalleDirectorioFree = cantidadDD - 1 //porque se crea la carpeta raiz
 	nuevoSB.InodosFree = cantidadInodos
 	nuevoSB.BloquesFree = cantidadBloques
 	nuevoSB.DateCreacion = getFechaHora()
@@ -801,8 +859,8 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	nuevoSB.TamDD = tamDD
 	nuevoSB.TamInodo = tamInodo
 	nuevoSB.TamBloque = tamBloque
-	nuevoSB.PrimerLibreAV = iniciobitmapAVD
-	nuevoSB.PrimerLibreDD = iniciobitmapDD
+	nuevoSB.PrimerLibreAV = iniciobitmapAVD + 1 //porque se crea la carpeta raiz
+	nuevoSB.PrimerLibreDD = iniciobitmapDD + 1  //porque se crea la carpeta raiz
 	nuevoSB.PrimerLibreInodo = iniciobitMapInodo
 	nuevoSB.PrimerLibreBloque = iniciobitmapBloque
 	nuevoSB.MagicNum = 201314821
@@ -821,6 +879,9 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	for i := 0; i < int(cantidadAVD); i++ {
 		file.Seek(pos, 0)
 		var vacio byte = '0'
+		if i == 0 {
+			vacio = '1'
+		}
 		s := &vacio
 		var binario2 bytes.Buffer
 		binary.Write(&binario2, binary.BigEndian, s)
@@ -832,6 +893,9 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	for i := 0; i < int(cantidadDD); i++ {
 		file.Seek(pos, 0)
 		var vacio byte = '0'
+		if i == 0 {
+			vacio = '1'
+		}
 		s := &vacio
 		var binario2 bytes.Buffer
 		binary.Write(&binario2, binary.BigEndian, s)
@@ -882,12 +946,18 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	binary.Write(&binario2, binary.BigEndian, &nuevoSB)
 	writeNextBytes(file, binario2.Bytes())
 
-	if strings.Compare(tipo, "full") == 0 {
+	if strings.Compare(tipo, "full") == 0 || strings.Compare(tipo, "fast") == 0 {
 		/*Escribiendo avd*/
 		pos = inicioAVD
 		for i := 0; i < int(cantidadAVD); i++ {
 			file.Seek(pos, 0)
 			avdVacio := avd{}
+			if i == 0 {
+				avdVacio.AVDApArbolVirtualDirectorio = 0
+				avdVacio.AVDApDetalleDirectorio = inicioDD
+				avdVacio.AVDFechaCreacion = nuevoSB.DateCreacion
+				avdVacio.AVDNombreDirectorio[0] = 47
+			}
 			s := &avdVacio
 			var binario2 bytes.Buffer
 			binary.Write(&binario2, binary.BigEndian, s)
@@ -931,6 +1001,8 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 			pos = pos + int64(unsafe.Sizeof(bloque{}))
 		}
 	}
+	/*Crear la carpeta raiz*/
+	graficarSB(path, inicioParticion)
 	return 1
 }
 
@@ -944,4 +1016,87 @@ func getFechaHora() [16]byte {
 	}
 	copy(retFecha[:], fechahoraCadena)
 	return retFecha
+}
+
+/**************************************************************
+	CREACION DE DIRECTORIOS
+***************************************************************/
+func crearDirectorio(id string, pathCadena string, atributoP int) {
+	var tipoParticion int
+	var inicioParticion int64
+	if strings.Compare(id, "") != 0 {
+		s := strings.Split(strings.ToLower(strings.TrimSpace(id)), "")
+		if len(s) > 3 {
+			if s[0][0] == 'v' && s[1][0] == 'd' && s[2][0] > 96 && s[2][0] < 123 {
+				var letra byte = s[2][0]
+				inputFmt := id[3:len(id)] + ""
+				idParticion := atributoSize(inputFmt)
+				if idParticion > 0 {
+					numResult, nombre, path := desmontarParticion2(letra, int64(idParticion))
+					//fmt.Println("El nombre que retorna desmontar particion")
+					//fmt.Println(nombre)
+					if numResult == 1 {
+						//mandar a cambiar el estado de la particion en el mbr\
+						pathEnviar := ""
+						numeroEnviar := 0
+						for index := 0; index < len(path); index++ {
+							if path[index] == 0 {
+								numeroEnviar = index
+								index = len(path) + 1
+								break
+							}
+						}
+						pathEnviar = BytesToString(path[0:numeroEnviar])
+						//Aqui ya tengo el path del disco y el nombre de la particion en la que se va a crear
+						//fmt.Println(pathEnviar)
+						//fmt.Println(nombre)
+
+						/************************************************************************/
+						tipoParticion, inicioParticion, _ = obtenerDatosParticion(pathEnviar, *nombre)
+						if tipoParticion == 0 {
+							fmt.Println("RESULTADO: No se encuentra la particion")
+						} else if tipoParticion == 3 {
+							fmt.Println("RESULTADO: No se puede formatear una particion extendida")
+						} else if tipoParticion == 1 {
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+							} else if estadoActual == 0 {
+								//no esta formateada
+								fmt.Println("RESULTADO: La particion en la que intenta crear el directorio no se encuentra formateada")
+								return
+							} else if estadoActual == 1 {
+								//ya esta formateada
+								fmt.Println("El directorio se creara")
+							}
+						} else if tipoParticion == 2 {
+							//es una extendida
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+							} else if estadoActual == 0 {
+								//no esta formateada
+								fmt.Println("RESULTADO: La particion en la que intenta crear el directorio no se encuentra formateada")
+								return
+							} else if estadoActual == 1 {
+								//ya esta formateada
+								fmt.Println("El directorio se creara")
+							}
+						}
+						/**************************************************/
+						fmt.Println(inicioParticion)
+					} else {
+						fmt.Println("RESULTADO: Error en el id de la particion en la que se desea crear el directorio")
+					}
+				} else {
+					fmt.Println("RESULTADO: Error en el id de la particion en la que se desea crear el directorio")
+				}
+			} else {
+				fmt.Println("RESULTADO: El formato del ID de la particion es incorrecto, no se creara el directorio ")
+			}
+		}
+	}
+
 }
