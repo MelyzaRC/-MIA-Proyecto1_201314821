@@ -117,6 +117,18 @@ func analizar(comando string) {
 			comandoMKDIR(comando)
 		case "rep":
 			comandoRep(comando)
+		case "salir":
+			fmt.Println("***********  ATENCION!  ***********")
+			fmt.Print("¿Realmente desea salir?\n1) SI\n2) NO\nIngrese una opcion: ")
+			lector := bufio.NewReader(os.Stdin)
+			comando, _ := lector.ReadString('\n')
+			if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
+				salirApp()
+			} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
+				//no hacer nada
+			} else {
+				fmt.Println("RESULTADO: Opcion incorrecta")
+			}
 		default:
 			fmt.Println("La instruccion " + s[0] + " no se reconoce")
 		}
@@ -300,17 +312,24 @@ func comandoMkdisk(comando string) {
 				if strings.Compare(name, "") == 1 {
 					_, err := os.Stat(strings.ReplaceAll(path+"/"+name, "\"", ""))
 					if err == nil {
-						fmt.Println("RESULTADO: El disco ya se encuentra creado, cambie de nombre")
-						/*Esto lo tengo que quitar*/
-						sName := strings.Split(name, ".")
-						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
-							//Aqui mando a crear el archivo
-							crearDisco(size, unit, path+"/"+name)
-							fmt.Println("RESULTADO: Disco creado")
+						fmt.Println("***********  ATENCION!  ***********")
+						fmt.Print("¿Desea sobre-escribir el disco?\n1) SI\n2) NO\nIngrese una opcion: ")
+						lector := bufio.NewReader(os.Stdin)
+						comando, _ := lector.ReadString('\n')
+						if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
+							sName := strings.Split(name, ".")
+							if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
+								//Aqui mando a crear el archivo
+								crearDisco(size, unit, path+"/"+name)
+								fmt.Println("RESULTADO: Disco creado")
+							} else {
+								fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DSK")
+							}
+						} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
+							fmt.Println("RESULTADO: Se ha cancelado la creacion del disco")
 						} else {
-							fmt.Println("RESULTADO: Solo se pueden crear discos con extension .DSK")
+							fmt.Println("RESULTADO: Opcion incorrecta, el disco no se creara")
 						}
-						/*Esto lo tengo que quitar*/
 					} else {
 						//verificar extension
 						sName := strings.Split(name, ".")
@@ -1107,4 +1126,10 @@ func atributoTypeFormat(cadena string) string {
 		}
 	}
 	return "error"
+}
+
+func salirApp() {
+	fmt.Println()
+	fmt.Println("Saliendo...")
+	defer os.Exit(0)
 }
