@@ -482,6 +482,194 @@ func graficarSB(path string, inicioParticion int64, pathDestino string, nombreDe
 }
 
 /**************************************************************
+	Graficar BITMAP AVD
+***************************************************************/
+func graficarBitMapDirectorio(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
+	sbTemp := superbloque{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+		if sbTemp.MagicNum == 201314821 {
+			lineaContenido := ""
+			counter := 0
+			for i := sbTemp.InicioBMAV; i < sbTemp.InicioAV; i++ {
+				file.Seek(i, 0)
+				var n byte
+				data := readNextBytes(file, unsafe.Sizeof(n))
+				buffer := bytes.NewBuffer(data)
+				err = binary.Read(buffer, binary.BigEndian, &n)
+				if err != nil {
+					log.Fatal("binary.Read failed", err)
+				}
+				if n == 0 {
+					lineaContenido = lineaContenido + "0 |"
+				} else if n == 1 {
+					lineaContenido = lineaContenido + "1 |"
+				}
+				if counter == 14 {
+					counter = 0
+					lineaContenido = lineaContenido + "\n"
+				} else {
+					counter = counter + 1
+				}
+			}
+			crearArchivo(pathDestino+"/"+nombreDestino+"."+formatoDestino, lineaContenido)
+		}
+	}
+}
+
+/**************************************************************
+	Graficar BITMAP DD
+***************************************************************/
+func graficarBitMapDetalle(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
+	sbTemp := superbloque{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+		if sbTemp.MagicNum == 201314821 {
+			lineaContenido := ""
+			counter := 0
+			for i := sbTemp.InicioBMDD; i < sbTemp.InicioDD; i++ {
+				file.Seek(i, 0)
+				var n byte
+				data := readNextBytes(file, unsafe.Sizeof(n))
+				buffer := bytes.NewBuffer(data)
+				err = binary.Read(buffer, binary.BigEndian, &n)
+				if err != nil {
+					log.Fatal("binary.Read failed", err)
+				}
+				if n == 0 {
+					lineaContenido = lineaContenido + "0 |"
+				} else if n == 1 {
+					lineaContenido = lineaContenido + "1 |"
+				}
+				if counter == 14 {
+					counter = 0
+					lineaContenido = lineaContenido + "\n"
+				} else {
+					counter = counter + 1
+				}
+			}
+			crearArchivo(pathDestino+"/"+nombreDestino+"."+formatoDestino, lineaContenido)
+		}
+	}
+}
+
+/**************************************************************
+	Graficar BITMAP INODOS
+***************************************************************/
+func graficarBitMapInodo(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
+	sbTemp := superbloque{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+		if sbTemp.MagicNum == 201314821 {
+			lineaContenido := ""
+			counter := 0
+			for i := sbTemp.InicioBMInodos; i < sbTemp.InicioInodos; i++ {
+				file.Seek(i, 0)
+				var n byte
+				data := readNextBytes(file, unsafe.Sizeof(n))
+				buffer := bytes.NewBuffer(data)
+				err = binary.Read(buffer, binary.BigEndian, &n)
+				if err != nil {
+					log.Fatal("binary.Read failed", err)
+				}
+				if n == 0 {
+					lineaContenido = lineaContenido + "0 |"
+				} else if n == 1 {
+					lineaContenido = lineaContenido + "1 |"
+				}
+				if counter == 14 {
+					counter = 0
+					lineaContenido = lineaContenido + "\n"
+				} else {
+					counter = counter + 1
+				}
+			}
+			crearArchivo(pathDestino+"/"+nombreDestino+"."+formatoDestino, lineaContenido)
+		}
+	}
+}
+
+/**************************************************************
+	Graficar BITMAP BLOQUES
+***************************************************************/
+func graficarBitMapBloque(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
+	sbTemp := superbloque{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+		if sbTemp.MagicNum == 201314821 {
+			lineaContenido := ""
+			counter := 0
+			for i := sbTemp.InicioBMBloques; i < sbTemp.InicioBloques; i++ {
+				file.Seek(i, 0)
+				var n byte
+				data := readNextBytes(file, unsafe.Sizeof(n))
+				buffer := bytes.NewBuffer(data)
+				err = binary.Read(buffer, binary.BigEndian, &n)
+				if err != nil {
+					log.Fatal("binary.Read failed", err)
+				}
+				if n == 0 {
+					lineaContenido = lineaContenido + "0 |"
+				} else if n == 1 {
+					lineaContenido = lineaContenido + "1 |"
+				}
+				if counter == 14 {
+					counter = 0
+					lineaContenido = lineaContenido + "\n"
+				} else {
+					counter = counter + 1
+				}
+			}
+			crearArchivo(pathDestino+"/"+nombreDestino+"."+formatoDestino, lineaContenido)
+		}
+	}
+}
+
+/**************************************************************
 	Metodo graficar general
 ***************************************************************/
 func graficar(arg3 string, arg5 string, formato string) {

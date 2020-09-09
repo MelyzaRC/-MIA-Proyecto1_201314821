@@ -36,7 +36,9 @@ func obtenerLineaConsola(texto string) {
 				obtenerLineaConsola(texto)
 			} else if strings.Contains(comando, "#") { //Quitar comentario entre lineas
 				pos := strings.LastIndex(comando, "#")
+				com1 := comando[pos:len(comando)]
 				comando = comando[0:pos]
+				fmt.Println(com1)
 				verificarLineaConsola(strings.TrimSpace(comando))
 			} else { //Puede ser un comando
 				verificarLineaConsola(strings.TrimSpace(comando))
@@ -94,7 +96,7 @@ func analizar(comando string) {
 	comando = strings.ReplaceAll(comando, "\n", "")
 	if strings.Compare(comando, "") == 1 {
 		s := strings.Split(comando, " -")
-		switch strings.ToLower(s[0]) {
+		switch strings.TrimSpace(strings.ToLower(s[0])) {
 		case "exec":
 			comandoExec(comando)
 		case "pause":
@@ -136,7 +138,7 @@ func comandoExec(comando string) {
 			if err == nil {
 				s3 := strings.Split(s2[1], ".")
 				if strings.Compare(s3[1], "mia") == 0 {
-					fmt.Println("RESULTADO: Leyendo archivo...")
+					fmt.Println("RESULTADO: Lectura de archivo")
 					fmt.Println("")
 					archivo := leerArchivo(s2[1])
 					//mandar a analizar ese archivo
@@ -151,8 +153,10 @@ func comandoExec(comando string) {
 		} else {
 			fmt.Println("RESULTADO: El parametro PATH es obligatorio")
 		}
-	} else {
+	} else if len(s) > 2 {
 		fmt.Println("RESULTADO: Demasiados parametros para el comando EXEC")
+	} else {
+		fmt.Println("RESULTADO: Faltan parametros para el comando EXEC")
 	}
 }
 
@@ -360,8 +364,18 @@ func comandoRmdisk(comando string) {
 						sName := strings.Split(pathActual, ".")
 						if strings.Compare(strings.ToLower(strings.TrimSpace(sName[1])), "dsk") == 0 {
 							//Aqui mando a borrar el disco
-							removerDisco(pathActual)
-							fmt.Println("RESULTADO: Disco eliminado")
+							fmt.Println("***********  ATENCION!  ***********")
+							fmt.Print("¿Realmente desea eliminar el disco?\n1) SI\n2) NO\nIngrese una opcion: ")
+							lector := bufio.NewReader(os.Stdin)
+							comando, _ := lector.ReadString('\n')
+							if strings.Compare(strings.TrimSpace(comando), "1") == 0 {
+								removerDisco(pathActual)
+								fmt.Println("RESULTADO: Disco eliminado")
+							} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
+								fmt.Println("RESULTADO: Se ha cancelado la eliminacion del disco")
+							} else {
+								fmt.Println("RESULTADO: Opcion incorrecta, el disco no se eliminara")
+							}
 						} else {
 							fmt.Println("RESULTADO: Solo se pueden eliminar discos con extension .DSK")
 						}
@@ -872,7 +886,7 @@ func comandoMKDIR(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia #comando EXEC
 
 /**************************************************************
 	COMANDO REP
@@ -919,9 +933,13 @@ func comandoRep(comando string) {
 						case "sb":
 							reporteSB(path, id)
 						case "bm_arbdir":
+							reporteBMAVD(path, id)
 						case "bm_detdir":
+							reporteBMDD(path, id)
 						case "bm_inode":
+							reporteBMINODO(path, id)
 						case "bm_block":
+							reporteBMBLOQUE(path, id)
 						case "bitacora":
 						case "directorio":
 						case "tree_file":
@@ -948,7 +966,7 @@ func comandoRep(comando string) {
 	}
 }
 
-//exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia
+//exec -path->/usr/local/go/src/archivos_proyecto1/archivo6.mia
 
 /**************************************************************
 	Atributos

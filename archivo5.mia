@@ -1,36 +1,44 @@
-#Creacion del disco 1
+COMANDO:  del disco 1
 
 mkdisk -size->10 -unit->m -path->"/home/melyza/Escritorio/mis discos" -name->discoFormatear.dsk       
 PAUSE
 
+#Particion 1 Primaria
+Fdisk -fit->bf -sizE->3 -unit->m -type->p -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion1
+PaUsE
+
 #Particion 2 Extendida
-Fdisk -fit->bf -sizE->5 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion2
+Fdisk -fit->bf -sizE->3 -unit->m -type->e -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion2
 PaUsE
 
-#Particion 4
-Fdisk -fit->bf -sizE->3 -unit->m -type->l -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion4
+#Particion 3 Logica
+Fdisk -fit->bf -sizE->2 -unit->m -type->l -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk" -name->Particion3
 PaUsE
 
-#montando particion 4
-mount -name->Particion4 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
+#montando particion 3
+mount -name->Particion3 -path->"/home/melyza/Escritorio/mis discos/discoFormatear.dsk"
 pause
 
 #Mostrando particiones montadas
 mount 
 pause
 
-#Formateando particion 4 
+#Formateando particion 3
 mkfs -id->vda1 -type->full
 pause
 
 #creando un directorio 
-mkdir -p -id->vda1 -path->"/holis"
+mkdir -p -id->vda1 -path->"/holis/como/estas/holitas/holissss"
 pause
 
 #creando reportes 
-rep -nombre->disk -path->"/home/reports/reporteDISCO.pdf" -id->vda1 
-rep -nombre->mbr -path->"/home/reports/reporteMBR.png" -id->vda1 
-rep -nombre->sb -path->"/home/reports/reporteSuperBloque.jpg" -id->vda1 
-pause 
+#rep -nombre->disk -path->"/home/reports/reporteDISCO.png" -id->vda1 
+#rep -nombre->mbr -path->"/home/reports/reporteMBR.png" -id->vda1 
+#rep -nombre->sb -path->"/home/reports/reporteSuperBloque.png" -id->vda1 
+#rep -nombre->bm_arbdir -path->"/home/reports/reporteBitmapAVD.txt" -id->vda1 
+#rep -nombre->bm_detdir -path->"/home/reports/reporteBitmapDD.txt" -id->vda1 
+#rep -nombre->bm_inode -path->"/home/reports/reporteBitmapInodo.txt" -id->vda1 
+#rep -nombre->bm_block -path->"/home/reports/reporteBitmapBloque.txt" -id->vda1 
+#pause 
 
 #Final del archivo 

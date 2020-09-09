@@ -878,9 +878,9 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	pos = iniciobitmapAVD
 	for i := 0; i < int(cantidadAVD); i++ {
 		file.Seek(pos, 0)
-		var vacio byte = '0'
+		var vacio byte = 0
 		if i == 0 {
-			vacio = '1'
+			vacio = 1
 		}
 		s := &vacio
 		var binario2 bytes.Buffer
@@ -892,9 +892,9 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	pos = iniciobitmapDD
 	for i := 0; i < int(cantidadDD); i++ {
 		file.Seek(pos, 0)
-		var vacio byte = '0'
+		var vacio byte = 0
 		if i == 0 {
-			vacio = '1'
+			vacio = 1
 		}
 		s := &vacio
 		var binario2 bytes.Buffer
@@ -907,7 +907,7 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	pos = iniciobitMapInodo
 	for i := 0; i < int(cantidadInodos); i++ {
 		file.Seek(pos, 0)
-		var vacio byte = '0'
+		var vacio byte = 0
 		s := &vacio
 		var binario2 bytes.Buffer
 		binary.Write(&binario2, binary.BigEndian, s)
@@ -919,7 +919,7 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 	pos = iniciobitmapBloque
 	for i := 0; i < int(cantidadBloques); i++ {
 		file.Seek(pos, 0)
-		var vacio byte = '0'
+		var vacio byte = 0
 		s := &vacio
 		var binario2 bytes.Buffer
 		binary.Write(&binario2, binary.BigEndian, s)
@@ -1068,7 +1068,8 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 								return
 							} else if estadoActual == 1 {
 								//ya esta formateada
-								fmt.Println("El directorio se creara")
+								//mandar a crear la carpeta
+								crearCarpeta(pathEnviar, inicioParticion, pathCadena)
 							}
 						} else if tipoParticion == 2 {
 							//es una extendida
@@ -1082,11 +1083,10 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 								return
 							} else if estadoActual == 1 {
 								//ya esta formateada
-								fmt.Println("El directorio se creara")
+								crearCarpeta(pathEnviar, inicioParticion+int64(unsafe.Sizeof(ebr{})), pathCadena)
 							}
 						}
 						/**************************************************/
-						fmt.Println(inicioParticion)
 					} else {
 						fmt.Println("RESULTADO: Error en el id de la particion en la que se desea crear el directorio")
 					}
@@ -1099,4 +1099,28 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 		}
 	}
 
+}
+
+func crearCarpeta(pathDisco string, inicioSuperBloque int64, pathCrear string) {
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioSuperBloque, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return
+	}
+	if sbLeido.MagicNum == 201314821 {
+		//aqui ya tengo mi superbloque leido
+		s := strings.Split(pathCrear, "/")
+		fmt.Println(s)
+
+	}
 }

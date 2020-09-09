@@ -1,0 +1,46 @@
+#Archivo de entrada Proyecto 1 - MIA
+
+#Creacion de discos 
+mkdisk -size->3 -unit->m -path->"/home/archivos/discos" -name->disco1.dsk
+mkdisk -size->5 -unit->m -path->"/home/archivos/discos" -name->disco2.dsk
+mkdisk -size->10 -unit->m -path->"/home/archivos/discos" -name->disco3.dsk
+mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
+pause
+
+#Eliminacion de discos 
+rmdisk -path->"/home/archivos/discos/disco1.dsk"
+pause 
+
+#Creacion de particiones
+fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
+fdisk -fit->bf -sizE->3 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria2
+fdisk -fit->bf -sizE->5 -unit->m -type->e -path->"/home/archivos/discos/disco4.dsk" -name->pextendida
+fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria3
+fdisk -fit->bf -sizE->2 -unit->m -type->l -path->"/home/archivos/discos/disco4.dsk" -name->plogica1
+pause
+
+#Montando particiones
+mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
+mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria2
+mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria3
+mount -path->"/home/archivos/discos/disco4.dsk" -name->plogica1
+pause
+
+#Mostrando particiones montadas
+mount 
+pause
+
+#Creando reportes 
+rep -nombre->disk -path->"/home/archivos/reportes/diskDisco1_1.png" -id->vda1
+pause 
+
+
+unmount -id->vda3
+fdisk -delete->full -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria3
+rep -nombre->disk -path->"/home/archivos/reportes/diskDisco1_1.png" -id->vda1
+
+unmount -id->vda1
+fdisk -delete->full -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
+rep -nombre->disk -path->"/home/archivos/reportes/diskDisco1_2.png" -id->vda2
+
+#final de archivo 
