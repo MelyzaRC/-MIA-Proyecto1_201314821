@@ -543,7 +543,7 @@ func formatear(idFormatear string, tipoFormato string) {
 									resultado := realizarFormato(pathEnviar, inicioParticion, tamParticion, tipoFormato)
 									if resultado == 1 {
 										actualizarEstadoFormato(letra, int64(idParticion))
-										fmt.Print("RESULTADO: Particion formateada con exito")
+										fmt.Println("RESULTADO: Particion formateada con exito")
 									}
 								} else if strings.Compare(strings.TrimSpace(comando), "2") == 0 {
 									//no formatear
@@ -1069,7 +1069,7 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 							} else if estadoActual == 1 {
 								//ya esta formateada
 								//mandar a crear la carpeta
-								crearCarpeta(pathEnviar, inicioParticion, pathCadena)
+								crearCarpeta(pathEnviar, inicioParticion, pathCadena, atributoP)
 							}
 						} else if tipoParticion == 2 {
 							//es una extendida
@@ -1083,7 +1083,7 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 								return
 							} else if estadoActual == 1 {
 								//ya esta formateada
-								crearCarpeta(pathEnviar, inicioParticion+int64(unsafe.Sizeof(ebr{})), pathCadena)
+								crearCarpeta(pathEnviar, inicioParticion+int64(unsafe.Sizeof(ebr{})), pathCadena, atributoP)
 							}
 						}
 						/**************************************************/
@@ -1101,7 +1101,7 @@ func crearDirectorio(id string, pathCadena string, atributoP int) {
 
 }
 
-func crearCarpeta(pathDisco string, inicioSuperBloque int64, pathCrear string) {
+func crearCarpeta(pathDisco string, inicioSuperBloque int64, pathCrear string, atributoP int) {
 	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
 	defer file.Close()
 	if err != nil {
@@ -1117,10 +1117,67 @@ func crearCarpeta(pathDisco string, inicioSuperBloque int64, pathCrear string) {
 		log.Fatal("binary.Read failed", err)
 		return
 	}
+
 	if sbLeido.MagicNum == 201314821 {
+		apRaiz := sbLeido.InicioAV
+		dirActual := apRaiz
 		//aqui ya tengo mi superbloque leido
 		s := strings.Split(pathCrear, "/")
-		fmt.Println(s)
+		if len(s) > 0 {
+			for i := 0 ; i< len(s) ; i++{
+				if strings.Compare(s[i] , "")!= 0{
+					index1, index2 := crearcarpetaRecursivo(pathDisco, s[i], inicioSuperBloque, dirActual, atributoP)
+					fmt.Println(index1)
+					fmt.Println(index2)
+				}
+			}
+		}
 
 	}
+}
+
+
+//el int retorna si el directorio existe o fue creado
+//el int64 retorna la estructura nueva o ya existente
+func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque int64, avdActual int64, atributoP int) (int, int64){
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0,0
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioSuperBloque, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0,0
+	}
+
+	if sbLeido.MagicNum == 201314821 {
+		//moverse a avdActual y leerlo
+		avdLeido := avd{}
+		file.Seek(avdActual, 0)
+		data := readNextBytes(file, unsafe.Sizeof(avd{}))
+		buffer := bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &avdLeido)
+		if err != nil {
+			log.Fatal("binary.Read failed", err)
+			return 0,0
+		}
+		//revisar entre el arreglo actual  
+		var convertido [100]byte
+		copy(convertido[:], carpeta)
+		for i := 0; i < len(avdLeido.AVDApArraySubdirectorios); i++ {
+			if avdLeido.AVDApArraySubdirectorios[i] != 0{
+				return 0,0
+			}	
+		}
+		//si sale es porque no hay directorios creados 
+		fmt.Println("Se tiene que crear el directorio ")
+
+	}
+	return 0,0
 }
