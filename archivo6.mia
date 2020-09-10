@@ -1,29 +1,16 @@
 #Archivo de entrada Proyecto 1 - MIA
 
 #Creacion de discos 
-mkdisk -size->3 -unit->m -path->"/home/archivos/discos" -name->disco1.dsk
-mkdisk -size->5 -unit->m -path->"/home/archivos/discos" -name->disco2.dsk
-mkdisk -size->10 -unit->m -path->"/home/archivos/discos" -name->disco3.dsk
 mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
 pause
 
-#Eliminacion de discos 
-rmdisk -path->"/home/archivos/discos/disco1.dsk"
-pause 
 
 #Creacion de particiones
 fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-fdisk -fit->bf -sizE->3 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria2
-fdisk -fit->bf -sizE->5 -unit->m -type->e -path->"/home/archivos/discos/disco4.dsk" -name->pextendida
-fdisk -fit->bf -sizE->1 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria3
-fdisk -fit->bf -sizE->2 -unit->m -type->l -path->"/home/archivos/discos/disco4.dsk" -name->plogica1
 pause
 
 #Montando particiones
 mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria2
-mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria3
-mount -path->"/home/archivos/discos/disco4.dsk" -name->plogica1
 pause
 
 #Mostrando particiones montadas
@@ -33,26 +20,24 @@ pause
 #Formateando particion pprimaria
 mkfs -id->vda1 -type->full
 pause 
-
-#Formateando particion logica
-mkfs -id->vda4 -type->full
-pause 
-
-#Reportes particion logica 
-rep -nombre->disk -path->"/home/archivos/reportes/reporteDISCO4.png" -id->vda4
-rep -nombre->mbr -path->"/home/archivos/reportes/reporteMBRDisco4.png" -id->vda4
-rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco4.png" -id->vda4
-rep -nombre->bm_arbdir -path->"/home/archivos/reportes/reporteBitmapAVDDisco4.txt" -id->vda4
-rep -nombre->bm_detdir -path->"/home/archivos/reportes/reporteBitmapDDDisco4.txt" -id->vda4
-rep -nombre->bm_inode -path->"/home/archivos/reportes/reporteBitmapInodoDisco4.txt" -id->vda4
-rep -nombre->bm_block -path->"/home/archivos/reportes/reporteBitmapBloqueDisco4.txt" -id->vda4 
-pause 
-
+rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1antes.png" -id->vda1
 #Creacion de directorios particion logica
-mkdir -p -id->vda4 -path->"/directorio1/"
-mkdir -p -id->vda4 -path->"/directorio1/directorio1_1"
-mkdir -p -id->vda4 -path->"/directorio1/directorio1_2"
-mkdir -p -id->vda4 -path->"/directorio1/directorio1_3"
+mkdir -p -id->vda1 -path->"/directorio1"
+mkdir -id->vda1 -path->"/directorio1/directorio1_1"
+mkdir -id->vda1 -path->"/directorio1/directorio1_2"
+mkdir -id->vda1 -path->"/directorio1/directorio1_3"
+mkdir -id->vda1 -path->"/directorio1/directorio1_4"
+mkdir -id->vda1 -path->"/directorio1/directorio1_5"
+mkdir -id->vda1 -path->"/directorio1/directorio1_6"
+mkdir -id->vda1 -path->"/directorio1/directorio1_7"
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_8/dir7_1"
 pause
+
+
+rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1.png" -id->vda1
+rep -nombre->bm_arbdir -path->"/home/archivos/reportes/reporteBitmapAVDDisco1.txt" -id->vda1
+rep -nombre->bm_detdir -path->"/home/archivos/reportes/reporteBitmapDDDisco1.txt" -id->vda1
+#pause
 
 #final de archivo

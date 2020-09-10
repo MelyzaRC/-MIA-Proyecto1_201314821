@@ -84,7 +84,7 @@ type superbloque struct {
 
 type avd struct {
 	AVDFechaCreacion            [16]byte
-	AVDNombreDirectorio         [100]byte
+	AVDNombreDirectorio         [16]byte
 	AVDApArraySubdirectorios    [6]int64
 	AVDApDetalleDirectorio      int64
 	AVDApArbolVirtualDirectorio int64

@@ -905,7 +905,7 @@ func comandoMKDIR(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo5.mia #comando EXEC
+///exec -path->/usr/local/go/src/archivos_proyecto1/archivo6.mia #comando EXEC
 
 /**************************************************************
 	COMANDO REP
@@ -961,6 +961,7 @@ func comandoRep(comando string) {
 							reporteBMBLOQUE(path, id)
 						case "bitacora":
 						case "directorio":
+							fmt.Println("Se creara la grafica de directorio")
 						case "tree_file":
 						case "tree_directorio":
 						case "tree_complete":
@@ -985,7 +986,6 @@ func comandoRep(comando string) {
 	}
 }
 
-//exec -path->/usr/local/go/src/archivos_proyecto1/archivo6.mia
 
 /**************************************************************
 	Atributos
