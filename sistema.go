@@ -1201,7 +1201,7 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 					return 0,0
 				}
 				if avdNuevo.AVDNombreDirectorio == convertido {
-					return 1, avdNuevo.AVDApArraySubdirectorios[i]
+					return 1, avdLeido.AVDApArraySubdirectorios[i]
 				}
 
 			}else {
@@ -1264,12 +1264,13 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				for i:=0 ; i < len(avdLeido.AVDApArraySubdirectorios); i++{
 					if avdLeido.AVDApArraySubdirectorios[i] == 0{
 						avdLeido.AVDApArraySubdirectorios[i] = retorno
-						i = 100
+						break
 					}
 				}
 				posactual = avdActual
-				file.Seek(posactual, 0)
+				file.Seek(avdActual, 0)
 				var binario10 bytes.Buffer
+
 				binary.Write(&binario10, binary.BigEndian, avdLeido)
 				writeNextBytes(file, binario10.Bytes())
 				//3 modificar el superbloque
@@ -1324,7 +1325,7 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				//1 escribir el avd nuevo y modificar el bitmap
 				posactual = sbLeido.InicioAV + ((sbLeido.PrimerLibreAV-1)*int64(unsafe.Sizeof(avd{})))
 				avdLeido.AVDApArbolVirtualDirectorio = posactual
-				retorno := posactual //posicion para escribir el avd
+				retorno2 := posactual //posicion para escribir el avd
 				file.Seek(posactual, 0 )
 				var binario bytes.Buffer
 				binary.Write(&binario, binary.BigEndian, ingresoAVD)
@@ -1339,7 +1340,7 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				//meter el arbol actual a su directorio padre 
 				for i:=0 ; i < len(avdLeido.AVDApArraySubdirectorios); i++{
 					if avdLeido.AVDApArraySubdirectorios[i] == 0{
-						avdLeido.AVDApArraySubdirectorios[i] = retorno
+						avdLeido.AVDApArraySubdirectorios[i] = retorno2
 						i = 100
 					}
 				}
@@ -1362,7 +1363,7 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				binary.Write(&binario5, binary.BigEndian, sbLeido)
 				writeNextBytes(file, binario5.Bytes())
 				fmt.Println("Creando un avd extra")
-				return crearcarpetaRecursivo(pathDisco, carpeta, inicioSuperBloque, retorno, atributoP, fin)
+				return crearcarpetaRecursivo(pathDisco, carpeta, inicioSuperBloque, retorno2, atributoP, fin)
 			}else{
 				//no hay espacio 
 				fmt.Println("RESULTADO: No hay espacio disponible para crear el directorio")

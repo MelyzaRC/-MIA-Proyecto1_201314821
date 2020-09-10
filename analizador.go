@@ -961,7 +961,7 @@ func comandoRep(comando string) {
 							reporteBMBLOQUE(path, id)
 						case "bitacora":
 						case "directorio":
-							fmt.Println("Se creara la grafica de directorio")
+							reporteDIRECTORIO(path, id)
 						case "tree_file":
 						case "tree_directorio":
 						case "tree_complete":

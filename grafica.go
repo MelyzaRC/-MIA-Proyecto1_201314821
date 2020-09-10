@@ -670,6 +670,125 @@ func graficarBitMapBloque(path string, inicioParticion int64, pathDestino string
 }
 
 /**************************************************************
+	Graficar BITMAP BLOQUES
+***************************************************************/
+func graficarDirectorioGeneral(path string, inicioParticion int64, pathDestino string, nombreDestino string, formatoDestino string) {
+	sbTemp := superbloque{}
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbTemp)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	if &sbTemp != nil {
+		if sbTemp.MagicNum == 201314821 {
+			contenido := ""
+			contenido = "digraph G {\n" +
+			"label = \"Reporte de DIRECTORIO\"\nnode [shape=record];\n"
+			/*Formar los nodos*/
+			contenido = contenido + "\n\n\n" + graficaDirectorioRecursiva(path, sbTemp.InicioAV) + "\n\n\n"
+			/*Crear los apuntadores*/
+			contenido = contenido + "}\n"
+			escribirDot(4, contenido, pathDestino, nombreDestino, formatoDestino)
+		}
+	}
+}
+
+func graficaDirectorioRecursiva(path string, inicioactual int64) string {
+	avdLeido := avd{}
+	contenido := ""
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		//return ""
+	}
+	file.Seek(inicioactual, 0)
+	data := readNextBytes(file, unsafe.Sizeof(avd{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &avdLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		//return ""
+	}
+
+	if &avdLeido != nil {
+		if avdLeido.AVDApDetalleDirectorio != 0{
+			///<f0>1|<f1>1|<f2>0|0|0|0|0|0
+			numDetener := 0
+			for indice := 0; indice < len(avdLeido.AVDNombreDirectorio); indice++ {
+				if avdLeido.AVDNombreDirectorio[indice] != 0 {
+					numDetener = indice
+				}
+			}
+			numDetener = numDetener + 1
+			copiaIn := inicioactual
+			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" label=\"{"+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
+			/*recorrer los apuntadores*/
+			for i:=0 ; i<len(avdLeido.AVDApArraySubdirectorios) ; i++{
+				contenido = contenido + " <f"
+				contenido = contenido + strconv.Itoa(int(i))
+				contenido = contenido + ">"
+				/*Aqui el contenido de sus subdirectorios*/
+				if avdLeido.AVDApArraySubdirectorios[i] == 0{
+					contenido = contenido + "0"
+				}else {
+					contenido = contenido + "1"
+				}
+				if i == len(avdLeido.AVDApArraySubdirectorios) -1{
+					//contenido = contenido + "||" //esto seria para el completo 
+					contenido = contenido + "|<f6>"
+				}else{
+					contenido = contenido + "|"
+				}
+			}
+			contenido = contenido + "}}\"];\n"
+
+			for i:=0 ; i<len(avdLeido.AVDApArraySubdirectorios) ; i++{
+				if avdLeido.AVDApArraySubdirectorios[i] != 0 {
+					contenido = contenido +"\n"+ graficaDirectorioRecursiva(path, avdLeido.AVDApArraySubdirectorios[i])
+				}
+			}
+
+			if avdLeido.AVDApArbolVirtualDirectorio != 0{
+				contenido = contenido + "\n" + graficaDirectorioRecursiva(path, avdLeido.AVDApArbolVirtualDirectorio)
+			}
+			/*Aqui hacer los enlaces*/
+
+			//de la tabla
+			for i := 0 ; i < len(avdLeido.AVDApArraySubdirectorios) ; i++{
+				if avdLeido.AVDApArraySubdirectorios[i] != 0 {
+					contenido = contenido + "\nnode"
+					
+					nuNodo :=  strconv.Itoa(int(inicioactual))
+					contenido = contenido + nuNodo+ ":f" + strconv.Itoa(int(i)) + "->node"
+					nuNodo2 :=  strconv.Itoa(int(avdLeido.AVDApArraySubdirectorios[i]))
+					contenido = contenido + nuNodo2 + "[color=\"#14106C\"];"
+				}
+			}
+			//con el extra
+			if avdLeido.AVDApArbolVirtualDirectorio != 0{
+				contenido = contenido + "\nnode"
+					
+				nuNodo :=  strconv.Itoa(int(inicioactual))
+				contenido = contenido + nuNodo+ ":f6->node"
+				nuNodo2 :=  strconv.Itoa(int(avdLeido.AVDApArbolVirtualDirectorio))
+				contenido = contenido + nuNodo2 + "[color=\"#6F080C\"];"
+			}
+			return contenido 
+
+		}
+		return contenido
+	}
+	return ""
+}
+/**************************************************************
 	Metodo graficar general
 ***************************************************************/
 func graficar(arg3 string, arg5 string, formato string) {
@@ -691,7 +810,9 @@ func escribirDot(tipo int, contenido string, pathDestino string, nombreDestino s
 	case 3:
 		crearArchivo("reportes/superbloque.dot", contenido)
 		graficar("reportes/superbloque.dot", pathDestino+"/"+nombreDestino+"."+formatoDestino, formatoDestino)
-	default:
+	case 4:
+		crearArchivo("reportes/directorio.dot", contenido)
+		graficar("reportes/directorio.dot", pathDestino+"/"+nombreDestino+"."+formatoDestino, formatoDestino)
 	}
 }
 

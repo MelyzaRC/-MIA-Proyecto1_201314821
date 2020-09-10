@@ -1,4 +1,3 @@
-#Archivo de entrada Proyecto 1 - MIA
 
 #Creacion de discos 
 mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
@@ -23,18 +22,36 @@ pause
 rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1antes.png" -id->vda1
 #Creacion de directorios particion logica
 mkdir -p -id->vda1 -path->"/directorio1"
-mkdir -id->vda1 -path->"/directorio1/directorio1_1"
-mkdir -id->vda1 -path->"/directorio1/directorio1_2"
-mkdir -id->vda1 -path->"/directorio1/directorio1_3"
-mkdir -id->vda1 -path->"/directorio1/directorio1_4"
-mkdir -id->vda1 -path->"/directorio1/directorio1_5"
-mkdir -id->vda1 -path->"/directorio1/directorio1_6"
-mkdir -id->vda1 -path->"/directorio1/directorio1_7"
 pause 
-mkdir -p -id->vda1 -path->"/directorio1/directorio1_8/dir7_1"
-pause
+mkdir -p -id->vda1 -path->"/directorio1/directorio11"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio12"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio13"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio14"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio15"
+mkdir -p -id->vda1 -path->"/directorio1/directorio16"
+mkdir -p -id->vda1 -path->"/directorio1/directorio17"
+mkdir -p -id->vda1 -path->"/directorio1/directorio11/dis1"
+mkdir -p -id->vda1 -path->"/directorio1/directorio12/dis2"
+mkdir -p -id->vda1 -path->"/directorio1/directorio13/dis3"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi1"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
+mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi2"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
 
-
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+pause 
 rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1.png" -id->vda1
 rep -nombre->bm_arbdir -path->"/home/archivos/reportes/reporteBitmapAVDDisco1.txt" -id->vda1
 rep -nombre->bm_detdir -path->"/home/archivos/reportes/reporteBitmapDDDisco1.txt" -id->vda1
