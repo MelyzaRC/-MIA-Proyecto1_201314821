@@ -1,60 +1,47 @@
 
 #Creacion de discos 
 mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
-pause
-
 
 #Creacion de particiones
 fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-pause
+
 
 #Montando particiones
 mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-pause
+
 
 #Mostrando particiones montadas
 mount 
-pause
+
 
 #Formateando particion pprimaria
 mkfs -id->vda1 -type->full
-pause 
+
 rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1antes.png" -id->vda1
 #Creacion de directorios particion logica
 mkdir -p -id->vda1 -path->"/directorio1"
-pause 
+mkdir -p -id->vda1 -path->"/directorio1"
+mkdir -p -id->vda1 -path->"/directorio1"
+pause
 mkdir -p -id->vda1 -path->"/directorio1/directorio11"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio12"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio13"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio14"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio15"
 mkdir -p -id->vda1 -path->"/directorio1/directorio16"
+mkdir -p -id->vda1 -path->"/directorio1/directorio17"
 mkdir -p -id->vda1 -path->"/directorio1/directorio17"
 mkdir -p -id->vda1 -path->"/directorio1/directorio11/dis1"
 mkdir -p -id->vda1 -path->"/directorio1/directorio12/dis2"
 mkdir -p -id->vda1 -path->"/directorio1/directorio13/dis3"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi1"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
 mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi2"
 rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
+rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1Despues.png" -id->vda1
 pause 
 
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-pause 
-rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1.png" -id->vda1
-rep -nombre->bm_arbdir -path->"/home/archivos/reportes/reporteBitmapAVDDisco1.txt" -id->vda1
-rep -nombre->bm_detdir -path->"/home/archivos/reportes/reporteBitmapDDDisco1.txt" -id->vda1
-#pause
+mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo1.txt" -size->150 -cont->"hola mundo"
+pause
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1DespuesFile.png" -id->vda1
 
 #final de archivo

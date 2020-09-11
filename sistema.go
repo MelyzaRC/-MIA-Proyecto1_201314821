@@ -8,7 +8,7 @@
 package main
 
 /**************************************************************
-	Importaciones
+	Imports
 ***************************************************************/
 import (
 	"bufio"
@@ -1148,7 +1148,6 @@ func crearCarpeta(pathDisco string, inicioSuperBloque int64, pathCrear string, a
 	}
 }
 
-
 //el int retorna si el directorio existe o fue creado
 //el int64 retorna la estructura nueva o ya existente
 func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque int64, avdActual int64, atributoP int, fin int) (int, int64){
@@ -1186,7 +1185,6 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 		if avdLeido.AVDNombreDirectorio == convertido{
 			return 1, avdActual
 		}
-
 		contadorVacio := 0
 		for i := 0; i < len(avdLeido.AVDApArraySubdirectorios); i++ {
 			
@@ -1201,6 +1199,9 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 					return 0,0
 				}
 				if avdNuevo.AVDNombreDirectorio == convertido {
+					if fin == 1{
+						fmt.Println("RESULTADO: El directorio ya se encuentra creado")
+					}
 					return 1, avdLeido.AVDApArraySubdirectorios[i]
 				}
 
@@ -1362,8 +1363,515 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				var binario5 bytes.Buffer
 				binary.Write(&binario5, binary.BigEndian, sbLeido)
 				writeNextBytes(file, binario5.Bytes())
-				fmt.Println("Creando un avd extra")
 				return crearcarpetaRecursivo(pathDisco, carpeta, inicioSuperBloque, retorno2, atributoP, fin)
+			}else{
+				//no hay espacio 
+				fmt.Println("RESULTADO: No hay espacio disponible para crear el directorio")
+				return 0,0
+			}
+
+		//*****************************************************************************************
+
+	}
+	return 0,0
+}
+
+/**************************************************************
+	CREACION DE ARCHIVOS
+***************************************************************/
+func crearFile(id string, pathCadena string, atributoP int, tamano int64, contenido string){
+	s := strings.Split(pathCadena, "/")
+	soloPath := "/"
+	nameArchivo:=""
+	if len(s) > 0{
+		for i:=0 ; i< len(s); i++{
+			if i != len(s) - 1{
+				soloPath= soloPath + "/" + s[i]
+			}else if i == len(s) -1{
+				nameArchivo = strings.TrimSpace(s[i])
+				break
+			}
+		}
+	}
+
+	res, dir, pathO, inicioO:= crearDirectorioFILE(id, soloPath, atributoP) 
+	if res==1{
+		//crear el archivo
+		i :=creacionArchivo(pathO, inicioO, dir, tamano, nameArchivo, contenido)
+		if i == 1{
+			fmt.Println("RESULTADO: Archivo creado con exito")
+		}else{
+			fmt.Println("RESULTADO: El archivo no se ha creado")
+		}
+	} 
+	//si no, ya mando el mensaje anteriormente
+}
+
+func creacionArchivo(pathDisco string, inicioParticion int64, inicioDirectorio int64, tamano int64, nombreArchivo string, contenidoArchivo string)int{
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0
+	}
+
+	if sbLeido.MagicNum == 201314821 {
+		avdLeido := avd{}
+		file.Seek(inicioDirectorio, 0)
+		data := readNextBytes(file, unsafe.Sizeof(avd{}))
+		buffer := bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &avdLeido)
+		if err != nil {
+			log.Fatal("binary.Read failed", err)
+			return 0
+		}
+		if avdLeido.AVDApDetalleDirectorio != 0{
+			//aqui buscar en los detalles de directorio en busca de nombres repetidos 
+			i:= insertarArchivo(pathDisco, inicioParticion, avdLeido.AVDApDetalleDirectorio, tamano, nombreArchivo, contenidoArchivo)
+			if i == 3{
+				fmt.Println("RESULTADO: El Archivo se encuentra repetido")
+			}else if i == 0{
+				fmt.Println("RESULTADO: No se ha podido crear el archivo")
+			}else if i == 1{
+				fmt.Println("RESULTADO: El archivo fue creado exitosamente")
+			}
+			return i
+		}
+	}
+	return 0
+}
+
+
+func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int64, tamano int64, nombreArchivo string, contenidoArchivo string) int {
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioParticion, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0
+	}
+
+	if sbLeido.MagicNum == 201314821 {
+		ddLeido := dd{}
+		file.Seek(inicioDetalle, 0)
+		data := readNextBytes(file, unsafe.Sizeof(dd{}))
+		buffer := bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &ddLeido)
+		if err != nil {
+			log.Fatal("binary.Read failed", err)
+			return 0
+		}
+		contadorVacio:= 0
+		if &ddLeido != nil{
+			//aqui buscar en los detalles de directorio en busca de nombres repetidos 
+			var convertido [16]byte
+			copy(convertido[:], strings.ToLower(strings.TrimSpace(nombreArchivo)))
+			for i :=0; i < len(ddLeido.DDArrayFiles) ; i++{
+
+				if ddLeido.DDArrayFiles[i].FileApInodo != 0{
+					if ddLeido.DDArrayFiles[i].FileNombre == convertido{
+						return 3
+					}
+				}else {
+					contadorVacio = contadorVacio + 1
+				}
+				
+			}
+			//si sale es porque no lo encontro 
+			if ddLeido.DDApDetalleDirectorio == 0{
+				//crearlo aqui
+				if contadorVacio == 0{
+					//crear nuevo detalle para crearlo
+				}else{
+					//crearlo aqui
+					//calcular tamano 
+
+					//Crear file
+					nuevoArchivo := file{}
+					nuevoArchivo.Nombre = convertido
+					//falta asignarle inodo
+					nuevoArchivo.FileDateCreacion = getFechaHora()
+					nuevoArchivo.FileDateModificacion = nuevoArchivo.FileDateCreacion
+
+					//Crear inodo
+					nuevoInodo := inodo{}
+
+					//Crear sus bloques
+
+				}
+			}else{
+				return insertarArchivo(pathDisco, inicioParticion, ddLeido.DDApDetalleDirectorio, tamano, nombreArchivo, contenidoArchivo)
+			}
+
+		}
+	}
+	return 0
+}
+
+func crearDirectorioFILE(id string, pathCadena string, atributoP int) (int, int64, string, int64){
+	var tipoParticion int
+	var inicioParticion int64
+	if strings.Compare(id, "") != 0 {
+		s := strings.Split(strings.ToLower(strings.TrimSpace(id)), "")
+		if len(s) > 3 {
+			if s[0][0] == 'v' && s[1][0] == 'd' && s[2][0] > 96 && s[2][0] < 123 {
+				var letra byte = s[2][0]
+				inputFmt := id[3:len(id)] + ""
+				idParticion := atributoSize(inputFmt)
+				if idParticion > 0 {
+					numResult, nombre, path := desmontarParticion2(letra, int64(idParticion))
+					//fmt.Println("El nombre que retorna desmontar particion")
+					//fmt.Println(nombre)
+					if numResult == 1 {
+						//mandar a cambiar el estado de la particion en el mbr\
+						pathEnviar := ""
+						numeroEnviar := 0
+						for index := 0; index < len(path); index++ {
+							if path[index] == 0 {
+								numeroEnviar = index
+								index = len(path) + 1
+								break
+							}
+						}
+						pathEnviar = BytesToString(path[0:numeroEnviar])
+						//Aqui ya tengo el path del disco y el nombre de la particion en la que se va a crear
+						//fmt.Println(pathEnviar)
+						//fmt.Println(nombre)
+
+						/************************************************************************/
+						tipoParticion, inicioParticion, _ = obtenerDatosParticion(pathEnviar, *nombre)
+						if tipoParticion == 0 {
+							//fmt.Println("RESULTADO: No se encuentra la particion")
+							return 0,0,"",0
+						} else if tipoParticion == 3 {
+							//fmt.Println("RESULTADO: No se puede formatear una particion extendida")
+							return 0,0,"",0
+						} else if tipoParticion == 1 {
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								//fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+								return 0,0,"",0
+							} else if estadoActual == 0 {
+								//no esta formateada
+								//fmt.Println("RESULTADO: La particion en la que intenta crear el directorio no se encuentra formateada")
+								return 0,0,"",0
+							} else if estadoActual == 1 {
+								//ya esta formateada
+								//mandar a crear la carpeta
+								v1, v2 := crearCarpetaFILE(pathEnviar, inicioParticion, pathCadena, atributoP)
+								return v1,v2, pathEnviar, inicioParticion
+							}
+						} else if tipoParticion == 2 {
+							//es una extendida
+							estadoActual := getEstadoFormato(letra, int64(idParticion))
+							if estadoActual == 5 {
+								//hay un problema
+								//fmt.Println("RESULTADO: Existe un problema de formateo de la particion")
+								return 0,0,"",0
+							} else if estadoActual == 0 {
+								//no esta formateada
+								//fmt.Println("RESULTADO: La particion en la que intenta crear el directorio no se encuentra formateada")
+								return 0,0,"",0
+							} else if estadoActual == 1 {
+								//ya esta formateada
+								v1, v2 := crearCarpetaFILE(pathEnviar, inicioParticion+int64(unsafe.Sizeof(ebr{})), pathCadena, atributoP)
+								return v1,v2, pathEnviar, inicioParticion
+							}
+						}
+						/**************************************************/
+					} else {
+						//fmt.Println("RESULTADO: Error en el id de la particion en la que se desea crear el directorio")
+						return 0,0, "",0
+					}
+				} else {
+					//fmt.Println("RESULTADO: Error en el id de la particion en la que se desea crear el directorio")
+					return 0,0,"",0
+				}
+			} else {
+				//fmt.Println("RESULTADO: El formato del ID de la particion es incorrecto, no se creara el directorio ")
+				return 0,0,"",0
+			}
+		}
+	}
+	return 0,0,"",0
+}
+
+func crearCarpetaFILE(pathDisco string, inicioSuperBloque int64, pathCrear string, atributoP int) (int, int64) {
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0 ,0
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioSuperBloque, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0,0
+	}
+
+	if sbLeido.MagicNum == 201314821 {
+		apRaiz := sbLeido.InicioAV
+		dirActual := apRaiz
+		//aqui ya tengo mi superbloque leido
+		s := strings.Split(pathCrear, "/")
+		if len(s) > 0 {
+ 			for i := 0 ; i< len(s) ; i++{
+				if strings.Compare(s[i] , "")!= 0{
+					index1, index2 := crearcarpetaRecursivoFILE(pathDisco, s[i], inicioSuperBloque, dirActual, atributoP, 0)
+					if index1 == 1{
+						dirActual = index2
+					}else{
+						return 0,0
+					}
+				}
+			}
+		return 1, dirActual
+		}
+
+	}
+	return 0,0
+}
+
+//el int retorna si el directorio existe o fue creado
+//el int64 retorna la estructura nueva o ya existente
+func crearcarpetaRecursivoFILE(pathDisco string, carpeta string, inicioSuperBloque int64, avdActual int64, atributoP int, fin int) (int, int64){
+	file, err := os.OpenFile(strings.ReplaceAll(pathDisco, "\"", ""), os.O_RDWR, os.ModeAppend)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		return 0,0
+	}
+	sbLeido := superbloque{}
+	file.Seek(inicioSuperBloque, 0)
+	data := readNextBytes(file, unsafe.Sizeof(superbloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &sbLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		return 0,0
+	}
+
+	if sbLeido.MagicNum == 201314821 {
+		//moverse a avdActual y leerlo
+		avdLeido := avd{}
+		file.Seek(avdActual, 0)
+		data := readNextBytes(file, unsafe.Sizeof(avd{}))
+		buffer := bytes.NewBuffer(data)
+		err = binary.Read(buffer, binary.BigEndian, &avdLeido)
+		if err != nil {
+			log.Fatal("binary.Read failed", err)
+			return 0,0
+		}
+		//revisar entre el arreglo actual  
+		var convertido [16]byte
+		copy(convertido[:], strings.ToLower(strings.TrimSpace(carpeta)))
+
+		if avdLeido.AVDNombreDirectorio == convertido{
+			return 1, avdActual
+		}
+		contadorVacio := 0
+		for i := 0; i < len(avdLeido.AVDApArraySubdirectorios); i++ {
+			
+			if avdLeido.AVDApArraySubdirectorios[i] != 0{
+				avdNuevo := avd{}
+				file.Seek(avdLeido.AVDApArraySubdirectorios[i], 0)
+				data := readNextBytes(file, unsafe.Sizeof(avd{}))
+				buffer := bytes.NewBuffer(data)
+				err = binary.Read(buffer, binary.BigEndian, &avdNuevo)
+				if err != nil {
+					log.Fatal("binary.Read failed", err)
+					return 0,0
+				}
+				if avdNuevo.AVDNombreDirectorio == convertido {
+					if fin == 1{
+						fmt.Println("RESULTADO: El directorio ya se encuentra creado")
+					}
+					return 1, avdLeido.AVDApArraySubdirectorios[i]
+				}
+
+			}else {
+				contadorVacio = contadorVacio + 1
+			}	
+		}
+
+		if atributoP == 0 && fin == 0 && avdLeido.AVDApArbolVirtualDirectorio == 0{
+			fmt.Println("RESULTADO: No se ha encontrado el directorio " + carpeta)
+			return 0,0
+		}else if avdLeido.AVDApArbolVirtualDirectorio != 0{
+			return crearcarpetaRecursivoFILE(pathDisco, carpeta, inicioSuperBloque, avdLeido.AVDApArbolVirtualDirectorio, atributoP, fin)
+		}
+		
+		//si sale es porque no encontro el nombre del directorio
+		if contadorVacio > 0 && atributoP == 1{
+			//todavia hay directorios disponibles en el array actual 
+
+			/*Verificar si hay disponibles*/
+
+			if sbLeido.ArbolVirtualFree > 0 && sbLeido.DetalleDirectorioFree > 0 {
+				//si lo hay
+				ingresoAVD := avd{}
+				ingresoAVD.AVDFechaCreacion = getFechaHora()
+				ingresoAVD.AVDNombreDirectorio = convertido
+				
+				ingresoDD := dd{} //no lleva parametros 
+
+
+				//2 escribir el dd  nuevo y modificar el bitmap
+				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
+				ingresoAVD.AVDApDetalleDirectorio = posactual
+				file.Seek(posactual, 0 )
+				var binario2 bytes.Buffer
+				binary.Write(&binario2, binary.BigEndian, ingresoDD)
+				writeNextBytes(file, binario2.Bytes())
+				
+				posactual = sbLeido.InicioBMDD + sbLeido.PrimerLibreDD -1
+				file.Seek(posactual, 0)
+				var cambioBitmap2 byte = 1
+				var binario3 bytes.Buffer
+				binary.Write(&binario3, binary.BigEndian, cambioBitmap2)
+				writeNextBytes(file, binario3.Bytes())
+
+				//1 escribir el avd nuevo y modificar el bitmap
+				posactual = sbLeido.InicioAV + ((sbLeido.PrimerLibreAV-1)*int64(unsafe.Sizeof(avd{})))
+				retorno := posactual //posicion para escribir el avd
+				file.Seek(posactual, 0 )
+				var binario bytes.Buffer
+				binary.Write(&binario, binary.BigEndian, ingresoAVD)
+				writeNextBytes(file, binario.Bytes())
+				
+				posactual = sbLeido.InicioBMAV + sbLeido.PrimerLibreAV -1
+				file.Seek(posactual, 0)
+				var cambioBitmap byte = 1
+				var binario1 bytes.Buffer
+				binary.Write(&binario1, binary.BigEndian, cambioBitmap)
+				writeNextBytes(file, binario1.Bytes())
+				//meter el arbol actual a su directorio padre 
+				for i:=0 ; i < len(avdLeido.AVDApArraySubdirectorios); i++{
+					if avdLeido.AVDApArraySubdirectorios[i] == 0{
+						avdLeido.AVDApArraySubdirectorios[i] = retorno
+						break
+					}
+				}
+				posactual = avdActual
+				file.Seek(avdActual, 0)
+				var binario10 bytes.Buffer
+
+				binary.Write(&binario10, binary.BigEndian, avdLeido)
+				writeNextBytes(file, binario10.Bytes())
+				//3 modificar el superbloque
+				sbLeido.ArbolVirtualCount = sbLeido.ArbolVirtualCount + 1			//se suma 1 directorio
+				sbLeido.DetalleDirectorioCount = sbLeido.DetalleDirectorioCount + 1	//se suma un detalle 
+				sbLeido.ArbolVirtualFree = sbLeido.ArbolVirtualFree -1 				//un avd libre menos
+				sbLeido.DetalleDirectorioFree = sbLeido.DetalleDirectorioFree -1 	//un dd  libre menos 
+				sbLeido.PrimerLibreAV = sbLeido.PrimerLibreAV + 1					//avanza uno en el bitmap de avd
+				sbLeido.PrimerLibreDD = sbLeido.PrimerLibreDD + 1					//avanza uno en el bitmap de dd
+				//4 escribir el superbloque
+				posactual = inicioSuperBloque
+				file.Seek(posactual, 0)
+				var binario5 bytes.Buffer
+				binary.Write(&binario5, binary.BigEndian, sbLeido)
+				writeNextBytes(file, binario5.Bytes())
+				fmt.Println("RESULTADO: Se ha creado el directorio " + carpeta)
+				return 1, retorno
+
+			}else{
+				//no hay espacio 
+				fmt.Println("RESULTADO: No hay espacio disponible para crear el directorio")
+				return 0,0
+			}
+		}else{
+			return 0,0
+		}
+
+		//si no se debe crear un nuevo avd con el nombre del actual para meter el subdirectorio 
+		//lo repito aqui mismo 
+		if sbLeido.ArbolVirtualFree > 0 && sbLeido.DetalleDirectorioFree > 0 && atributoP == 1{
+				//si lo hay
+				ingresoAVD := avd{}
+				ingresoAVD.AVDFechaCreacion = avdLeido.AVDFechaCreacion
+				ingresoAVD.AVDNombreDirectorio = avdLeido.AVDNombreDirectorio
+				
+				ingresoDD := dd{} //no lleva parametros 
+
+
+				//2 escribir el dd  nuevo y modificar el bitmap
+				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
+				ingresoAVD.AVDApDetalleDirectorio = posactual
+				file.Seek(posactual, 0 )
+				var binario2 bytes.Buffer
+				binary.Write(&binario2, binary.BigEndian, ingresoDD)
+				writeNextBytes(file, binario2.Bytes())
+				
+				posactual = sbLeido.InicioBMDD + sbLeido.PrimerLibreDD -1
+				file.Seek(posactual, 0)
+				var cambioBitmap2 byte = 1
+				var binario3 bytes.Buffer
+				binary.Write(&binario3, binary.BigEndian, cambioBitmap2)
+				writeNextBytes(file, binario3.Bytes())
+
+				//1 escribir el avd nuevo y modificar el bitmap
+				posactual = sbLeido.InicioAV + ((sbLeido.PrimerLibreAV-1)*int64(unsafe.Sizeof(avd{})))
+				avdLeido.AVDApArbolVirtualDirectorio = posactual
+				retorno2 := posactual //posicion para escribir el avd
+				file.Seek(posactual, 0 )
+				var binario bytes.Buffer
+				binary.Write(&binario, binary.BigEndian, ingresoAVD)
+				writeNextBytes(file, binario.Bytes())
+				
+				posactual = sbLeido.InicioBMAV + sbLeido.PrimerLibreAV -1
+				file.Seek(posactual, 0)
+				var cambioBitmap byte = 1
+				var binario1 bytes.Buffer
+				binary.Write(&binario1, binary.BigEndian, cambioBitmap)
+				writeNextBytes(file, binario1.Bytes())
+				//meter el arbol actual a su directorio padre 
+				for i:=0 ; i < len(avdLeido.AVDApArraySubdirectorios); i++{
+					if avdLeido.AVDApArraySubdirectorios[i] == 0{
+						avdLeido.AVDApArraySubdirectorios[i] = retorno2
+						i = 100
+					}
+				}
+				posactual = avdActual
+				file.Seek(posactual, 0)
+				var binario10 bytes.Buffer
+				binary.Write(&binario10, binary.BigEndian, avdLeido)
+				writeNextBytes(file, binario10.Bytes())
+				//3 modificar el superbloque
+				sbLeido.ArbolVirtualCount = sbLeido.ArbolVirtualCount + 1			//se suma 1 directorio
+				sbLeido.DetalleDirectorioCount = sbLeido.DetalleDirectorioCount + 1	//se suma un detalle 
+				sbLeido.ArbolVirtualFree = sbLeido.ArbolVirtualFree -1 				//un avd libre menos
+				sbLeido.DetalleDirectorioFree = sbLeido.DetalleDirectorioFree -1 	//un dd  libre menos 
+				sbLeido.PrimerLibreAV = sbLeido.PrimerLibreAV + 1					//avanza uno en el bitmap de avd
+				sbLeido.PrimerLibreDD = sbLeido.PrimerLibreDD + 1					//avanza uno en el bitmap de dd
+				//4 escribir el superbloque
+				posactual = inicioSuperBloque
+				file.Seek(posactual, 0)
+				var binario5 bytes.Buffer
+				binary.Write(&binario5, binary.BigEndian, sbLeido)
+				writeNextBytes(file, binario5.Bytes())
+				return crearcarpetaRecursivoFILE(pathDisco, carpeta, inicioSuperBloque, retorno2, atributoP, fin)
 			}else{
 				//no hay espacio 
 				fmt.Println("RESULTADO: No hay espacio disponible para crear el directorio")

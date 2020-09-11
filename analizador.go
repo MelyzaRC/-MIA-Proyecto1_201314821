@@ -8,7 +8,7 @@
 package main
 
 /**************************************************************
-	Importaciones
+	Imports
 ***************************************************************/
 import (
 	"bufio"
@@ -117,6 +117,8 @@ func analizar(comando string) {
 			comandoMKDIR(comando)
 		case "rep":
 			comandoRep(comando)
+		case "mkfile":
+			comandoMKFILE(comando)
 		case "salir":
 			fmt.Println("***********  ATENCION!  ***********")
 			fmt.Print("¿Realmente desea salir?\n1) SI\n2) NO\nIngrese una opcion: ")
@@ -905,8 +907,6 @@ func comandoMKDIR(comando string) {
 	}
 }
 
-///exec -path->/usr/local/go/src/archivos_proyecto1/archivo6.mia #comando EXEC
-
 /**************************************************************
 	COMANDO REP
 ***************************************************************/
@@ -986,6 +986,70 @@ func comandoRep(comando string) {
 	}
 }
 
+/**************************************************************
+	COMANDO MKFILE
+	Obligatorios
+		-id (de la particion ya formateada)
+		-path (DE LA CARPETA A CREAR)
+	Opcional
+		-p crear padres
+***************************************************************/
+func comandoMKFILE(comando string) {
+	fmt.Println("EJECUTANDO: " + comando)
+	if strings.Compare(comando, "") != 0 {
+		s := strings.Split(comando, " -")
+		atribP := 0
+		atribPath := ""
+		atribID := ""
+		atribSize:= 0
+		atribCont := ""
+		if len(s) > 2 {
+			for i := 1; i < len(s); i++ {
+				s2 := strings.Split(s[i], "->")
+				if len(s2) > 0 {
+					if len(s2) == 1 {
+						//parametro p
+						atribP = 1
+					} else if len(s2) > 1 {
+						switch strings.ToLower(strings.TrimSpace(s2[0])) {
+						case "id":
+							atribID = strings.ToLower(strings.TrimSpace(s2[1]))
+						case "path":
+							atribPath = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
+						case "size":
+							if strings.Contains(s2[1], "-"){
+								fmt.Println("RESULTADO: El tamano del archivo no puede ser negativo")
+								return
+							}
+							atribSize = atributoSize(strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))))
+						case "cont":
+							atribCont = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
+						default:
+							fmt.Println("RESULTADO: Parametro no permitido para el comando MKFILE")
+							return
+						}
+					}
+				}
+			}
+			/*fmt.Println(atribP)
+			fmt.Println(atribPath)
+			fmt.Println(atribId)*/
+			if strings.Compare(atribPath, "") != 0 {
+				if strings.Compare(atribID, "") != 0 {
+					crearFile(atribID, atribPath, atribP, int64(atribSize), atribCont)
+				} else {
+					fmt.Println("RESULTADO: Debe ingresar el id de la particion en la que desea crear el archivo")
+					return
+				}
+			} else {
+				fmt.Println("RESULTADO: Debe ingresar la ruta del archivo a crear")
+				return
+			}
+		} else {
+			fmt.Println("RESULTADO: Faltan parametros obligatorios para el comando MKDIR")
+		}
+	}
+}
 
 /**************************************************************
 	Atributos
