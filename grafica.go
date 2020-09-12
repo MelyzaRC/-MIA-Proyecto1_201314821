@@ -690,7 +690,7 @@ func graficarDirectorioGeneral(path string, inicioParticion int64, pathDestino s
 		if sbTemp.MagicNum == 201314821 {
 			contenido := ""
 			contenido = "digraph G {\n" +
-			"label = \"Reporte de DIRECTORIO\"\nnode [shape=record];\n"
+			"label = \"Reporte de DIRECTORIO\"\nnode [shape=record penwidth = 3];"
 			/*Formar los nodos*/
 			contenido = contenido + "\n\n\n" + graficaDirectorioRecursiva(path, sbTemp.InicioAV) + "\n\n\n"
 			/*Crear los apuntadores*/
@@ -729,7 +729,7 @@ func graficaDirectorioRecursiva(path string, inicioactual int64) string {
 			}
 			numDetener = numDetener + 1
 			copiaIn := inicioactual
-			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" label=\"{"+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
+			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#9C640C\" fillcolor=\"#F4D03F\" style=\"filled\" label=\"{"+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
 			/*recorrer los apuntadores*/
 			for i:=0 ; i<len(avdLeido.AVDApArraySubdirectorios) ; i++{
 				contenido = contenido + " <f"
@@ -769,7 +769,7 @@ func graficaDirectorioRecursiva(path string, inicioactual int64) string {
 					nuNodo :=  strconv.Itoa(int(inicioactual))
 					contenido = contenido + nuNodo+ ":f" + strconv.Itoa(int(i)) + "->node"
 					nuNodo2 :=  strconv.Itoa(int(avdLeido.AVDApArraySubdirectorios[i]))
-					contenido = contenido + nuNodo2 + "[color=\"#14106C\"];"
+					contenido = contenido + nuNodo2 + "[color=\"#641E16\"];"
 				}
 			}
 			//con el extra
@@ -810,7 +810,7 @@ func graficarCompleto(path string, inicioParticion int64, pathDestino string, no
 		if sbTemp.MagicNum == 201314821 {
 			contenido := ""
 			contenido = "digraph G {\n" +
-			"label = \"Reporte TREE COMPLETE\"\nnode [shape=record];\n"
+			"label = \"Reporte TREE COMPLETE\"\nnode [shape=record penwidth = 3];\nratio = auto;\n"
 			/*Formar los nodos*/
 			contenido = contenido + "\n\n\n" + graficaCompletoRecursiva(path, sbTemp.InicioAV) + "\n\n\n"
 			/*Crear los apuntadores*/
@@ -847,9 +847,11 @@ func graficaCompletoRecursiva(path string, inicioactual int64) string {
 					numDetener = indice
 				}
 			}
+
+			//fillcolor=\"#BB8FCE\" style=\"filled\"
 			numDetener = numDetener + 1
 			copiaIn := inicioactual
-			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" label=\"{DIRECTORIO: "+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
+			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" fillcolor=\"#D98880\" style=\"filled\"  label=\"{DIRECTORIO: "+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
 			/*recorrer los apuntadores*/
 			for i:=0 ; i<len(avdLeido.AVDApArraySubdirectorios) ; i++{
 				contenido = contenido + " <f"
@@ -863,7 +865,12 @@ func graficaCompletoRecursiva(path string, inicioactual int64) string {
 				}
 				if i == len(avdLeido.AVDApArraySubdirectorios) -1{
 					//contenido = contenido + "||" //esto seria para el completo 
-					contenido = contenido + "|<f6>|<f7>"
+					contenido = contenido + "|<f6>▤|"
+					if avdLeido.AVDApArbolVirtualDirectorio == 0{
+						contenido = contenido + "<f7>□ "
+					}else{
+						contenido = contenido + "<f7>■"
+					}
 				}else{
 					contenido = contenido + "|"
 				}
@@ -957,7 +964,7 @@ func graficarDDs(path string, inicioDD int64) string {
 			return ""
 		}else{
 			nuNodo :=  strconv.Itoa(int(inicioDD))
-			contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#370A19\" label=\"{DETALLE|" 
+			contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#370A19\" fillcolor=\"#BB8FCE\" style=\"filled\" label=\"{DETALLE|" 
 			//{<f1>nombre de archivo}|{<f2>}|{<f3>}|{<f4>}|{<f5>}|{<f6>Aqui va el apuntador a otro }  ir armando
 			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
 				contenido = contenido + "{<f" + strconv.Itoa(int(i)) + ">"
@@ -1045,7 +1052,7 @@ func graficarInodos(path string, inicioDD int64) string {
 	if &inodoLeido != nil {
 		
 		nuNodo :=  strconv.Itoa(int(inicioDD))
-		contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#370A19\" label=\"{INODO|" 
+		contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#0B5345\" fillcolor=\"#2ECC71\" style=\"filled\" label=\"{INODO|" 
 		//{<f1>nombre de archivo}|{<f2>}|{<f3>}|{<f4>}|{<f5>}|{<f6>Aqui va el apuntador a otro }  ir armando
 		for i:= 0 ; i < len(inodoLeido.IArrayBloques); i++{
 			contenido = contenido + "{<f" + strconv.Itoa(int(i)) + ">"
@@ -1110,7 +1117,7 @@ func graficarBloque(path string, inicio int64) string {
 	}
 
 	if &bloqueLeido != nil {
-		contenido = contenido + "\nnode"+strconv.Itoa(int(inicio))+" [style=bold color=\"#085E6F\" label=\"{BLOQUE|{<f0>"
+		contenido = contenido + "\nnode"+strconv.Itoa(int(inicio))+" [style=bold color=\"#085E6F\" fillcolor=\"#5DADE2\" style=\"filled\"  label=\"{BLOQUE|{<f0>"
 		numDetener := 0
 		for indice := 0; indice < len(bloqueLeido.DBData); indice++ {
 			if bloqueLeido.DBData[indice] != 0 {

@@ -4,14 +4,17 @@ mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
 mount 
 mkfs -id->vda1 -type->full
 mkdir -p -id->vda1 -path->"/directorio1"
-mkfile -p -id->vda1 -path->"/directorio1/archivo1.txt" -size->0 -cont->"contenido"
-mkfile -p -id->vda1 -path->"/directorio1/archivo2.txt" -size->100 -cont->"Hola mi amor te amo con todo mi corazon eres mi corazoncito te adoro"
-mkfile -p -id->vda1 -path->"/directorio1/archivo3.txt" -size->15 -cont->"Melyza Alejandra Rodriguez contreras"
-mkfile -p -id->vda1 -path->"/directorio1/archivo4.txt" -size->25 -cont->"hola mundo"
-mkfile -p -id->vda1 -path->"/directorio1/archivo5.txt" -size->26 -cont->"hola mundo"
-mkfile -p -id->vda1 -path->"/directorio1/archivo6.txt" -size->50 -cont->"hola mundo"
-mkfile -p -id->vda1 -path->"/directorio1/archivo7.txt" -size->150 -cont->"a"
-rep -nombre->tree_complete -path->"/home/archivos/reportes/reporteTREECOMPLETE.png" -id->vda1
+mkdir -p -id->vda1 -path->"/directorio2"
+mkdir -p -id->vda1 -path->"/directorio3"
+mkdir -p -id->vda1 -path->"/directorio4"
+mkdir -p -id->vda1 -path->"/directorio5"
+mkdir -p -id->vda1 -path->"/directorio6"
+mkdir -p -id->vda1 -path->"/directorio7"
+mkfile -p -id->vda1 -path->"/directorio1/archivo2.txt" -size->150 -cont->"Hola mi amor te amo con todo mi corazon eres mi corazoncito te adoro"
+mkfile -p -id->vda1 -path->"archivo2.txt" -size->25 -cont->""Hola"
+rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirec.png" -id->vda1
+
+rep -nombre->tree_complete -path->"/home/archivos/reportes/reportetree.png" -id->vda1
 pause
 
 #final de archivo
