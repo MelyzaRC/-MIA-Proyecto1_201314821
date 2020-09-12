@@ -92,7 +92,7 @@ type avd struct {
 }
 
 type dd struct {
-	DDArrayFiles          [5]file
+	DDArrayFiles          [5]archivo
 	DDApDetalleDirectorio int64
 }
 
@@ -117,7 +117,7 @@ type bitacora struct {
 	LogFecha         [16]byte
 }
 
-type file struct {
+type archivo struct {
 	FileNombre           [16]byte
 	FileApInodo          int64
 	FileDateCreacion     [16]byte

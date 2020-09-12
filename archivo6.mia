@@ -40,7 +40,13 @@ rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.
 rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1Despues.png" -id->vda1
 pause 
 
-mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo1.txt" -size->150 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo1.txt" -size->0 -cont->"hola mundo"
+pause
+mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo2.txt" -size->15 -cont->"hola mundo"
+pause
+mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo3.txt" -size->26 -cont->"hola mundo"
+pause
+mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo2.txt" -size->225 -cont->"hola mundo"
 pause
 rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1DespuesFile.png" -id->vda1
 

@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 	"unsafe"
+	"math"
 )
 
 /**************************************************************
@@ -1398,11 +1399,14 @@ func crearFile(id string, pathCadena string, atributoP int, tamano int64, conten
 	if res==1{
 		//crear el archivo
 		i :=creacionArchivo(pathO, inicioO, dir, tamano, nameArchivo, contenido)
-		if i == 1{
-			fmt.Println("RESULTADO: Archivo creado con exito")
-		}else{
-			fmt.Println("RESULTADO: El archivo no se ha creado")
+		if i == 3{
+			fmt.Println("RESULTADO: El Archivo se encuentra repetido")
+		}else if i == 0{
+			fmt.Println("RESULTADO: No se ha podido crear el archivo")
+		}else if i == 1{
+			fmt.Println("RESULTADO: El archivo fue creado exitosamente")
 		}
+		
 	} 
 	//si no, ya mando el mensaje anteriormente
 }
@@ -1437,13 +1441,6 @@ func creacionArchivo(pathDisco string, inicioParticion int64, inicioDirectorio i
 		if avdLeido.AVDApDetalleDirectorio != 0{
 			//aqui buscar en los detalles de directorio en busca de nombres repetidos 
 			i:= insertarArchivo(pathDisco, inicioParticion, avdLeido.AVDApDetalleDirectorio, tamano, nombreArchivo, contenidoArchivo)
-			if i == 3{
-				fmt.Println("RESULTADO: El Archivo se encuentra repetido")
-			}else if i == 0{
-				fmt.Println("RESULTADO: No se ha podido crear el archivo")
-			}else if i == 1{
-				fmt.Println("RESULTADO: El archivo fue creado exitosamente")
-			}
 			return i
 		}
 	}
@@ -1495,26 +1492,162 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 				
 			}
 			//si sale es porque no lo encontro 
-			if ddLeido.DDApDetalleDirectorio == 0{
+			if ddLeido.DDApDetalleDirectorio == 0 {
 				//crearlo aqui
 				if contadorVacio == 0{
-					//crear nuevo detalle para crearlo
+					//crear un nuevo dd y mandarlo a insertar en el nuevo DD \
+					if sbLeido.DetalleDirectorioFree > 0{
+						
+						ddExtra := dd{}
+						direccionDD := sbLeido.InicioBMDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{}))
+						ddLeido.DDApDetalleDirectorio = direccionDD
+						file.Seek(direccionDD,0)
+						var binarioDDE bytes.Buffer
+						binary.Write(&binarioDDE, binary.BigEndian, ddExtra)
+						writeNextBytes(file, binarioDDE.Bytes())
+
+						file.Seek(inicioDetalle,0)
+						var binarioDDE1 bytes.Buffer
+						binary.Write(&binarioDDE1, binary.BigEndian, ddLeido)
+						writeNextBytes(file, binarioDDE1.Bytes())
+
+
+						sbLeido.DetalleDirectorioFree = sbLeido.DetalleDirectorioFree - 1
+						sbLeido.PrimerLibreDD = sbLeido.PrimerLibreDD + 1
+						file.Seek(inicioParticion, 0)
+						var binarioSBE bytes.Buffer
+						binary.Write(&binarioSBE, binary.BigEndian, sbLeido)
+						writeNextBytes(file, binarioSBE.Bytes())
+
+						return insertarArchivo(pathDisco, inicioParticion, direccionDD, tamano, nombreArchivo, contenidoArchivo)
+					}
 				}else{
 					//crearlo aqui
 					//calcular tamano 
+					numBloque:= 0
+					if tamano <= 25 {
+						numBloque = 1
+					}else{
+						residuo := math.Mod(float64(tamano), 25)
+						numBloque = int(tamano / 25)
+						if residuo != 0{
+							numBloque = numBloque + 1
+						}
+						
+					}
 
-					//Crear file
-					nuevoArchivo := file{}
-					nuevoArchivo.Nombre = convertido
-					//falta asignarle inodo
-					nuevoArchivo.FileDateCreacion = getFechaHora()
-					nuevoArchivo.FileDateModificacion = nuevoArchivo.FileDateCreacion
+					numInodos:= 0
+					if numBloque <= 4 {
+						numInodos = 1
+					}else{
+						residuo := math.Mod(float64(numBloque), 4)
+						numInodos = int(numBloque / 4)
+						if residuo != 0{
+							numInodos = numInodos + 1
+						}
+						
+					}
 
-					//Crear inodo
-					nuevoInodo := inodo{}
+					//preguntando si hay inodos y bloques suficientes 
+					if sbLeido.InodosFree >= int64(numInodos) && sbLeido.BloquesFree >= int64(numBloque){
+						//si hay espacio 
 
-					//Crear sus bloques
+						archivoNuevo := archivo{}
+						archivoNuevo.FileNombre = convertido
+						archivoNuevo.FileDateCreacion = getFechaHora()
+						archivoNuevo.FileDateModificacion = getFechaHora()
+						archivoNuevo.FileApInodo =  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
 
+						/***************************************************************************/
+						//crear bloques 
+						contadorBloques := 0
+						tmpInodo := inodo{}
+						tmpInodo.ICountInodo = sbLeido.InicioBMInodos
+						tmpInodo.ISizeArchivo = tamano
+						tmpInodo.ICountBloquesAsignados = 0
+						escrito := 0
+						for i := 0 ; i < numBloque ; i++{
+							if contadorBloques == 3{
+								//crear otro inodo
+								direccionBloque :=  sbLeido.InicioBloques + (sbLeido.PrimerLibreBloque - 1)*int64(unsafe.Sizeof(bloque{}))
+								bloqueNuevo := bloque{}
+								/*Aqui le tendria que poner el contenido peor aun no lo hago*/
+								file.Seek(direccionBloque,0)
+								var binario bytes.Buffer
+								binary.Write(&binario, binary.BigEndian, bloqueNuevo)
+								writeNextBytes(file, binario.Bytes())
+								tmpInodo.IArrayBloques[contadorBloques] = direccionBloque 
+								tmpInodo.ICountBloquesAsignados = tmpInodo.ICountBloquesAsignados + 1
+								sbLeido.PrimerLibreBloque = sbLeido.PrimerLibreBloque + 1
+								/*tengo que escribir el inodo actual en el disco*/
+								direccionInodo :=  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
+								if i != numBloque -1 {
+									//no lo estoy creando
+									tmpInodo.IApIndirecto = direccionInodo + int64(unsafe.Sizeof(inodo{}))
+								}
+								file.Seek(direccionInodo,0)
+								var binario2 bytes.Buffer
+								binary.Write(&binario2, binary.BigEndian, tmpInodo)
+								writeNextBytes(file, binario2.Bytes()) 
+								sbLeido.PrimerLibreInodo = sbLeido.PrimerLibreInodo + 1
+								escrito = 1
+								nuevoInodo := inodo{}
+								nuevoInodo.ICountInodo = sbLeido.InicioBMInodos
+								nuevoInodo.ISizeArchivo = tamano
+								nuevoInodo.ICountBloquesAsignados = 0
+								tmpInodo = nuevoInodo
+								contadorBloques = 0
+							}else{
+								escrito = 0
+								//solo insertar bloque
+								direccionBloque :=  sbLeido.InicioBloques + (sbLeido.PrimerLibreBloque - 1)*int64(unsafe.Sizeof(bloque{}))
+								bloqueNuevo := bloque{}
+								/*Aqui le tendria que poner el contenido peor aun no lo hago*/
+								file.Seek(direccionBloque,0)
+								var binario bytes.Buffer
+								binary.Write(&binario, binary.BigEndian, bloqueNuevo)
+								writeNextBytes(file, binario.Bytes())
+								tmpInodo.IArrayBloques[contadorBloques] = direccionBloque 
+								tmpInodo.ICountBloquesAsignados = tmpInodo.ICountBloquesAsignados + 1
+								sbLeido.PrimerLibreBloque = sbLeido.PrimerLibreBloque + 1
+								contadorBloques = contadorBloques + 1
+							}
+						}
+
+						if escrito == 0{
+							direccionInodo :=  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
+							file.Seek(direccionInodo,0)
+							var binario2 bytes.Buffer
+							binary.Write(&binario2, binary.BigEndian, tmpInodo)
+							writeNextBytes(file, binario2.Bytes()) 
+							sbLeido.PrimerLibreInodo = sbLeido.PrimerLibreInodo + 1
+							escrito = 1
+						}
+						/***************************************************************************/
+
+						//escribiendo el archivo   
+						for i := 0 ; i < len(ddLeido.DDArrayFiles); i++{
+							if ddLeido.DDArrayFiles[i].FileApInodo == 0{
+								ddLeido.DDArrayFiles[i] = archivoNuevo
+							}
+						}
+
+						//ya que ingrese el archivo en el dd rescribo el dd
+						file.Seek(inicioDetalle, 0)
+						var binarioDD bytes.Buffer
+						binary.Write(&binarioDD, binary.BigEndian, ddLeido)
+						writeNextBytes(file, binarioDD.Bytes())
+
+						//actualizar el superbloque 
+						file.Seek(inicioParticion, 0)
+						var binarioSB bytes.Buffer
+						binary.Write(&binarioSB, binary.BigEndian, sbLeido)
+						writeNextBytes(file, binarioSB.Bytes())
+						return 1
+					}else{
+						//no hay suficientes inodos o bloques 
+						return 0
+					}
 				}
 			}else{
 				return insertarArchivo(pathDisco, inicioParticion, ddLeido.DDApDetalleDirectorio, tamano, nombreArchivo, contenidoArchivo)
