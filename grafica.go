@@ -810,7 +810,7 @@ func graficarCompleto(path string, inicioParticion int64, pathDestino string, no
 		if sbTemp.MagicNum == 201314821 {
 			contenido := ""
 			contenido = "digraph G {\n" +
-			"label = \"Reporte de DIRECTORIO\"\nnode [shape=record];\n"
+			"label = \"Reporte TREE COMPLETE\"\nnode [shape=record];\n"
 			/*Formar los nodos*/
 			contenido = contenido + "\n\n\n" + graficaCompletoRecursiva(path, sbTemp.InicioAV) + "\n\n\n"
 			/*Crear los apuntadores*/
@@ -849,7 +849,7 @@ func graficaCompletoRecursiva(path string, inicioactual int64) string {
 			}
 			numDetener = numDetener + 1
 			copiaIn := inicioactual
-			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" label=\"{"+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
+			contenido = contenido + "node"+ strconv.Itoa(int(copiaIn)) +"[style=bold color=\"#6F080C\" label=\"{DIRECTORIO: "+ BytesToString(avdLeido.AVDNombreDirectorio[:numDetener]) +" |{"
 			/*recorrer los apuntadores*/
 			for i:=0 ; i<len(avdLeido.AVDApArraySubdirectorios) ; i++{
 				contenido = contenido + " <f"
@@ -988,14 +988,13 @@ func graficarDDs(path string, inicioDD int64) string {
 					contenido = contenido + nuNodo+ ":f6->node"
 					nuNodo2 :=  strconv.Itoa(int(ddLeido.DDApDetalleDirectorio))
 					contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
-					//hacer el enlace
-					return contenido
 				}
-				return contenido
+			}else{
+				contenido = contenido + "{<f6>0}"
+				contenido = contenido + "}\"];"
 			}
 
-			contenido = contenido + "{<f6>0}"
-			contenido = contenido + "}\"];"
+			
 
 
 			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
@@ -1004,16 +1003,16 @@ func graficarDDs(path string, inicioDD int64) string {
 					contenido = contenido + con2
 				}
 			}
-
 			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
 				if ddLeido.DDArrayFiles[i].FileApInodo != 0 {
 					contenido = contenido + "\nnode"
 					nuNodo :=  strconv.Itoa(int(inicioDD))
-					contenido = contenido + nuNodo+ ":f"+strconv.Itoa(int(i+1))+"->node"
+					contenido = contenido + nuNodo+ ":f"+strconv.Itoa(int(i))+"->node"
 					nuNodo2 :=  strconv.Itoa(int(ddLeido.DDArrayFiles[i].FileApInodo))
 					contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
 				}
 			}
+			
 
 
 			return contenido
@@ -1046,7 +1045,7 @@ func graficarInodos(path string, inicioDD int64) string {
 	if &inodoLeido != nil {
 		
 		nuNodo :=  strconv.Itoa(int(inicioDD))
-		contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#370A19\" label=\"{INODOS|" 
+		contenido = contenido + "\nnode" + nuNodo + "[style=bold color=\"#370A19\" label=\"{INODO|" 
 		//{<f1>nombre de archivo}|{<f2>}|{<f3>}|{<f4>}|{<f5>}|{<f6>Aqui va el apuntador a otro }  ir armando
 		for i:= 0 ; i < len(inodoLeido.IArrayBloques); i++{
 			contenido = contenido + "{<f" + strconv.Itoa(int(i)) + ">"
@@ -1069,15 +1068,61 @@ func graficarInodos(path string, inicioDD int64) string {
 				nuNodo :=  strconv.Itoa(int(inicioDD))
 				contenido = contenido + nuNodo+ ":f5->node"
 				nuNodo2 :=  strconv.Itoa(int(inodoLeido.IApIndirecto))
-				contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
+				contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];\n"
 			}
-			return contenido
+		}else{
+			contenido = contenido + "{<f5>0}"
+			contenido = contenido + "}\"];"
 		}
-		contenido = contenido + "{<f5>0}"
-		contenido = contenido + "}\"];"
+		for i:= 0 ; i < len(inodoLeido.IArrayBloques); i++{
+			if inodoLeido.IArrayBloques[i] != 0{
+				contenido = contenido + graficarBloque(path, inodoLeido.IArrayBloques[i])
+				contenido = contenido + "\nnode"
+				nuNodo :=  strconv.Itoa(int(inicioDD))
+				contenido = contenido + nuNodo+ ":f"+strconv.Itoa(int(i))+"->node"
+				nuNodo2 :=  strconv.Itoa(int(inodoLeido.IArrayBloques[i]))
+				contenido = contenido + nuNodo2 + "[color=\"#B03A2E\"];\n"
+			}
+		}
+
+
 		return contenido
 	}
 	return ""
+}
+
+func graficarBloque(path string, inicio int64) string {
+	bloqueLeido := bloque{}
+	contenido := ""
+	file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+		//return ""
+	}
+	file.Seek(inicio, 0)
+	data := readNextBytes(file, unsafe.Sizeof(bloque{}))
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &bloqueLeido)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+		//return ""
+	}
+
+	if &bloqueLeido != nil {
+		contenido = contenido + "\nnode"+strconv.Itoa(int(inicio))+" [style=bold color=\"#085E6F\" label=\"{BLOQUE|{<f0>"
+		numDetener := 0
+		for indice := 0; indice < len(bloqueLeido.DBData); indice++ {
+			if bloqueLeido.DBData[indice] != 0 {
+				numDetener = indice
+			}
+		}
+		numDetener = numDetener + 1
+		comp := BytesToString(bloqueLeido.DBData[:numDetener])
+		contenido = contenido + comp
+		contenido = contenido +"}}\"];"
+	}
+	return contenido
 }
 
 

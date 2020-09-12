@@ -1536,7 +1536,9 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 					//crearlo aqui
 					//calcular tamano 
 					numBloque:= 0
-					if tamano <= 25 {
+					if tamano == 0{
+						numBloque = 0
+					}else if tamano <= 25 {
 						numBloque = 1
 					}else{
 						residuo := math.Mod(float64(tamano), 25)
@@ -1577,6 +1579,8 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						tmpInodo.ISizeArchivo = tamano
 						tmpInodo.ICountBloquesAsignados = 0
 						escrito := 0
+						contadorContenido:= 0
+						var contadorAbecedario byte = 97 //llega a 122
 						for i := 0 ; i < numBloque ; i++{
 							if contadorBloques == 3{
 								//crear otro inodo
@@ -1599,6 +1603,28 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 								direccionBloque :=  sbLeido.InicioBloques + (sbLeido.PrimerLibreBloque - 1)*int64(unsafe.Sizeof(bloque{}))
 								bloqueNuevo := bloque{}
 								/*Aqui le tendria que poner el contenido peor aun no lo hago*/
+								
+								convertidoContenido := []byte(contenidoArchivo)
+								//copy(convertidoContenido[:],contenidoArchivo)
+								for j := 0 ; j < len(bloqueNuevo.DBData); j++{
+									if contadorContenido <  len(convertidoContenido){
+										bloqueNuevo.DBData[j] = convertidoContenido[contadorContenido]
+										contadorContenido = contadorContenido + 1
+									}else{
+										contadorContenido = contadorContenido + 1 
+										bloqueNuevo.DBData[j] = contadorAbecedario
+										if contadorAbecedario == 122{
+											contadorAbecedario = 97 
+										}else{
+											contadorAbecedario = contadorAbecedario + 1
+										}
+									}
+								}
+								//contadorContenido = 0
+								contadorAbecedario = 97
+								//extraer sub cadena primeros 25
+								//extraer sub cadena lo que sobra 
+
 								file.Seek(direccionBloque,0)
 								var binario bytes.Buffer
 								binary.Write(&binario, binary.BigEndian, bloqueNuevo)
@@ -1633,6 +1659,27 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 								direccionBloque :=  sbLeido.InicioBloques + (sbLeido.PrimerLibreBloque - 1)*int64(unsafe.Sizeof(bloque{}))
 								bloqueNuevo := bloque{}
 								/*Aqui le tendria que poner el contenido peor aun no lo hago*/
+
+								convertidoContenido := []byte(contenidoArchivo)
+								//copy(convertidoContenido[:],contenidoArchivo)
+								for j := 0 ; j < len(bloqueNuevo.DBData); j++{
+									//fmt.Println("Contador contenido es")
+									//fmt.Println(contadorContenido)
+									if contadorContenido <  len(convertidoContenido){
+										bloqueNuevo.DBData[j] = convertidoContenido[contadorContenido]
+										contadorContenido = contadorContenido + 1
+									}else{
+										contadorContenido = contadorContenido +1
+										bloqueNuevo.DBData[j] = contadorAbecedario
+										if contadorAbecedario == 122{
+											contadorAbecedario = 97 
+										}else{
+											contadorAbecedario = contadorAbecedario + 1
+										}
+									}
+								}
+								//contadorContenido = 0
+								contadorAbecedario = 97
 								file.Seek(direccionBloque,0)
 								var binario bytes.Buffer
 								binary.Write(&binario, binary.BigEndian, bloqueNuevo)
