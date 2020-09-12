@@ -1,53 +1,36 @@
-
-#Creacion de discos 
 mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
-
-#Creacion de particiones
 fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-
-
-#Montando particiones
 mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-
-
-#Mostrando particiones montadas
 mount 
-
-
-#Formateando particion pprimaria
 mkfs -id->vda1 -type->full
+mkdir -p -id->vda1 -path->"/directorio1"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_1"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_2"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_3"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_4"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_5"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_6"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_7"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_7"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_1/d1"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_2/d2"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_3/d3_1"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_3/d3_2"
+mkdir -p -id->vda1 -path->"/directorio1/directorio1_3/d3_3"
 
-rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1antes.png" -id->vda1
-#Creacion de directorios particion logica
-mkdir -p -id->vda1 -path->"/directorio1"
-mkdir -p -id->vda1 -path->"/directorio1"
-mkdir -p -id->vda1 -path->"/directorio1"
+mkfile -p -id->vda1 -path->"/directorio1/archivo1.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/archivo2.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/archivo3.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/archivo4.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/archivo5.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/directorio1/archivo6.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo1.txt" -size->0 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo2.txt" -size->15 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo3.txt" -size->250 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo4.txt" -size->250 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo5.txt" -size->250 -cont->"hola mundo"
+mkfile -p -id->vda1 -path->"/archivos/archivo6.txt" -size->250 -cont->"hola mundo"
+rep -nombre->tree_complete -path->"/home/archivos/reportes/reporteTREECOMPLETE.png" -id->vda1
 pause
-mkdir -p -id->vda1 -path->"/directorio1/directorio11"
-mkdir -p -id->vda1 -path->"/directorio1/directorio12"
-mkdir -p -id->vda1 -path->"/directorio1/directorio13"
-mkdir -p -id->vda1 -path->"/directorio1/directorio14"
-mkdir -p -id->vda1 -path->"/directorio1/directorio15"
-mkdir -p -id->vda1 -path->"/directorio1/directorio16"
-mkdir -p -id->vda1 -path->"/directorio1/directorio17"
-mkdir -p -id->vda1 -path->"/directorio1/directorio17"
-mkdir -p -id->vda1 -path->"/directorio1/directorio11/dis1"
-mkdir -p -id->vda1 -path->"/directorio1/directorio12/dis2"
-mkdir -p -id->vda1 -path->"/directorio1/directorio13/dis3"
-mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi1"
-mkdir -p -id->vda1 -path->"/directorio1/directorio13/holi2"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1.png" -id->vda1
-rep -nombre->sb -path->"/home/archivos/reportes/reporteSuperBloqueDisco1Despues.png" -id->vda1
-pause 
-
-mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo1.txt" -size->0 -cont->"hola mundo"
-pause
-mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo2.txt" -size->15 -cont->"hola mundo"
-pause
-mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo3.txt" -size->26 -cont->"hola mundo"
-pause
-mkfile -p -id->vda1 -path->"/directorio1/nuevoArchivo/nuevo2/archivo2.txt" -size->225 -cont->"hola mundo"
-pause
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirectorioDisco1DespuesFile.png" -id->vda1
 
 #final de archivo

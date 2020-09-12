@@ -965,6 +965,7 @@ func comandoRep(comando string) {
 						case "tree_file":
 						case "tree_directorio":
 						case "tree_complete":
+							reporteCOMPLETE(path, id)
 						case "ls":
 						default:
 							fmt.Println("RESULTADO: No se reconoce el tipo de reporte a realizar")

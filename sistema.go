@@ -1232,7 +1232,9 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				
 				ingresoDD := dd{} //no lleva parametros 
 
-
+				for i := 0 ; i<len(ingresoDD.DDArrayFiles); i++{
+					ingresoDD.DDArrayFiles[i].FileApInodo  = 0
+				}
 				//2 escribir el dd  nuevo y modificar el bitmap
 				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
 				ingresoAVD.AVDApDetalleDirectorio = posactual
@@ -1307,10 +1309,12 @@ func crearcarpetaRecursivo(pathDisco string, carpeta string, inicioSuperBloque i
 				ingresoAVD.AVDNombreDirectorio = avdLeido.AVDNombreDirectorio
 				
 				ingresoDD := dd{} //no lleva parametros 
-
+				for i := 0 ; i<len(ingresoDD.DDArrayFiles); i++{
+					ingresoDD.DDArrayFiles[i].FileApInodo  = 0
+				}
 
 				//2 escribir el dd  nuevo y modificar el bitmap
-				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
+				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD-1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
 				ingresoAVD.AVDApDetalleDirectorio = posactual
 				file.Seek(posactual, 0 )
 				var binario2 bytes.Buffer
@@ -1486,7 +1490,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 					if ddLeido.DDArrayFiles[i].FileNombre == convertido{
 						return 3
 					}
-				}else {
+				}else{
 					contadorVacio = contadorVacio + 1
 				}
 				
@@ -1499,12 +1503,19 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 					if sbLeido.DetalleDirectorioFree > 0{
 						
 						ddExtra := dd{}
-						direccionDD := sbLeido.InicioBMDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{}))
+						direccionDD := sbLeido.InicioDD + (sbLeido.PrimerLibreDD-1)*int64(unsafe.Sizeof(dd{}))
 						ddLeido.DDApDetalleDirectorio = direccionDD
 						file.Seek(direccionDD,0)
 						var binarioDDE bytes.Buffer
 						binary.Write(&binarioDDE, binary.BigEndian, ddExtra)
 						writeNextBytes(file, binarioDDE.Bytes())
+						/*modificar bitmap*/
+						posactual := sbLeido.InicioBMDD + sbLeido.PrimerLibreDD -1
+						file.Seek(posactual, 0)
+						var cambioBitmap2 byte = 1
+						var binario3 bytes.Buffer
+						binary.Write(&binario3, binary.BigEndian, cambioBitmap2)
+						writeNextBytes(file, binario3.Bytes())
 
 						file.Seek(inicioDetalle,0)
 						var binarioDDE1 bytes.Buffer
@@ -1518,7 +1529,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						var binarioSBE bytes.Buffer
 						binary.Write(&binarioSBE, binary.BigEndian, sbLeido)
 						writeNextBytes(file, binarioSBE.Bytes())
-
+						
 						return insertarArchivo(pathDisco, inicioParticion, direccionDD, tamano, nombreArchivo, contenidoArchivo)
 					}
 				}else{
@@ -1556,7 +1567,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						archivoNuevo.FileNombre = convertido
 						archivoNuevo.FileDateCreacion = getFechaHora()
 						archivoNuevo.FileDateModificacion = getFechaHora()
-						archivoNuevo.FileApInodo =  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
+						archivoNuevo.FileApInodo =  sbLeido.InicioInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
 
 						/***************************************************************************/
 						//crear bloques 
@@ -1569,6 +1580,22 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						for i := 0 ; i < numBloque ; i++{
 							if contadorBloques == 3{
 								//crear otro inodo
+
+								posactual := sbLeido.InicioBMBloques + sbLeido.PrimerLibreBloque -1
+								file.Seek(posactual, 0)
+								var cambioBitmap2 byte = 1
+								var binario3 bytes.Buffer
+								binary.Write(&binario3, binary.BigEndian, cambioBitmap2)
+								writeNextBytes(file, binario3.Bytes())
+
+								posactual = sbLeido.InicioBMInodos + sbLeido.PrimerLibreInodo -1
+								file.Seek(posactual, 0)
+								var cambioBitmap3 byte = 1
+								var binario444 bytes.Buffer
+								binary.Write(&binario444, binary.BigEndian, cambioBitmap3)
+								writeNextBytes(file, binario444.Bytes())
+
+
 								direccionBloque :=  sbLeido.InicioBloques + (sbLeido.PrimerLibreBloque - 1)*int64(unsafe.Sizeof(bloque{}))
 								bloqueNuevo := bloque{}
 								/*Aqui le tendria que poner el contenido peor aun no lo hago*/
@@ -1580,7 +1607,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 								tmpInodo.ICountBloquesAsignados = tmpInodo.ICountBloquesAsignados + 1
 								sbLeido.PrimerLibreBloque = sbLeido.PrimerLibreBloque + 1
 								/*tengo que escribir el inodo actual en el disco*/
-								direccionInodo :=  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
+								direccionInodo :=  sbLeido.InicioInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
 								if i != numBloque -1 {
 									//no lo estoy creando
 									tmpInodo.IApIndirecto = direccionInodo + int64(unsafe.Sizeof(inodo{}))
@@ -1596,6 +1623,9 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 								nuevoInodo.ISizeArchivo = tamano
 								nuevoInodo.ICountBloquesAsignados = 0
 								tmpInodo = nuevoInodo
+
+
+
 								contadorBloques = 0
 							}else{
 								escrito = 0
@@ -1607,6 +1637,14 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 								var binario bytes.Buffer
 								binary.Write(&binario, binary.BigEndian, bloqueNuevo)
 								writeNextBytes(file, binario.Bytes())
+
+								posactual := sbLeido.InicioBMBloques + sbLeido.PrimerLibreBloque -1
+								file.Seek(posactual, 0)
+								var cambioBitmap2 byte = 1
+								var binario3 bytes.Buffer
+								binary.Write(&binario3, binary.BigEndian, cambioBitmap2)
+								writeNextBytes(file, binario3.Bytes())
+
 								tmpInodo.IArrayBloques[contadorBloques] = direccionBloque 
 								tmpInodo.ICountBloquesAsignados = tmpInodo.ICountBloquesAsignados + 1
 								sbLeido.PrimerLibreBloque = sbLeido.PrimerLibreBloque + 1
@@ -1615,7 +1653,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						}
 
 						if escrito == 0{
-							direccionInodo :=  sbLeido.InicioBMInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
+							direccionInodo :=  sbLeido.InicioInodos + (sbLeido.PrimerLibreInodo - 1)*int64(unsafe.Sizeof(inodo{}))
 							file.Seek(direccionInodo,0)
 							var binario2 bytes.Buffer
 							binary.Write(&binario2, binary.BigEndian, tmpInodo)
@@ -1629,6 +1667,7 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 						for i := 0 ; i < len(ddLeido.DDArrayFiles); i++{
 							if ddLeido.DDArrayFiles[i].FileApInodo == 0{
 								ddLeido.DDArrayFiles[i] = archivoNuevo
+								break
 							}
 						}
 
@@ -1657,6 +1696,8 @@ func insertarArchivo(pathDisco string, inicioParticion int64, inicioDetalle int6
 	}
 	return 0
 }
+
+
 
 func crearDirectorioFILE(id string, pathCadena string, atributoP int) (int, int64, string, int64){
 	var tipoParticion int
@@ -1869,7 +1910,9 @@ func crearcarpetaRecursivoFILE(pathDisco string, carpeta string, inicioSuperBloq
 				ingresoAVD.AVDNombreDirectorio = convertido
 				
 				ingresoDD := dd{} //no lleva parametros 
-
+				for i := 0 ; i<len(ingresoDD.DDArrayFiles); i++{
+					ingresoDD.DDArrayFiles[i].FileApInodo  = 0
+				}
 
 				//2 escribir el dd  nuevo y modificar el bitmap
 				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
@@ -1947,7 +1990,9 @@ func crearcarpetaRecursivoFILE(pathDisco string, carpeta string, inicioSuperBloq
 				ingresoAVD.AVDNombreDirectorio = avdLeido.AVDNombreDirectorio
 				
 				ingresoDD := dd{} //no lleva parametros 
-
+				for i := 0 ; i<len(ingresoDD.DDArrayFiles); i++{
+					ingresoDD.DDArrayFiles[i].FileApInodo  = 0
+				}
 
 				//2 escribir el dd  nuevo y modificar el bitmap
 				posactual := sbLeido.InicioDD + (sbLeido.PrimerLibreDD - 1)*int64(unsafe.Sizeof(dd{})) //posicion para escribir el avd
