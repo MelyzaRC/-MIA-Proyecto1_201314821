@@ -973,22 +973,7 @@ func graficarDDs(path string, inicioDD int64) string {
 				contenido = contenido + "}|"
 			}
 
-			/*for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
-				if ddLeido.DDArrayFiles[i].FileApInodo != 0 {
-					con2:= graficarInodos(path, ddLeido.DDArrayFiles[i].FileApInodo)
-					contenido = contenido + con2
-				}
-			}
-
-			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
-				if ddLeido.DDArrayFiles[i].FileApInodo != 0 {
-					contenido = contenido + "\nnode"
-					nuNodo :=  strconv.Itoa(int(inicioDD))
-					contenido = contenido + nuNodo+ ":f"+strconv.Itoa(int(i+1))+"->node"
-					nuNodo2 :=  strconv.Itoa(int(ddLeido.DDArrayFiles[i].FileApInodo))
-					contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
-				}
-			}*/
+			
 
 			
 			if ddLeido.DDApDetalleDirectorio != 0{
@@ -1011,6 +996,26 @@ func graficarDDs(path string, inicioDD int64) string {
 
 			contenido = contenido + "{<f6>0}"
 			contenido = contenido + "}\"];"
+
+
+			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
+				if ddLeido.DDArrayFiles[i].FileApInodo != 0 {
+					con2:= graficarInodos(path, ddLeido.DDArrayFiles[i].FileApInodo)
+					contenido = contenido + con2
+				}
+			}
+
+			for i:= 0 ; i < len(ddLeido.DDArrayFiles); i++{
+				if ddLeido.DDArrayFiles[i].FileApInodo != 0 {
+					contenido = contenido + "\nnode"
+					nuNodo :=  strconv.Itoa(int(inicioDD))
+					contenido = contenido + nuNodo+ ":f"+strconv.Itoa(int(i+1))+"->node"
+					nuNodo2 :=  strconv.Itoa(int(ddLeido.DDArrayFiles[i].FileApInodo))
+					contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
+				}
+			}
+
+
 			return contenido
 		}
 	}
@@ -1052,9 +1057,11 @@ func graficarInodos(path string, inicioDD int64) string {
 		}
 		
 		if inodoLeido.IApIndirecto != 0{
+			con1:= graficarInodos(path, inodoLeido.IApIndirecto)
+
 			contenido = contenido + "{<f5>1}"
 			contenido = contenido + "}\"];"
-			con1:= graficarInodos(path, inodoLeido.IApIndirecto)
+			
 			if strings.Compare(con1, "")!=0{
 				contenido = contenido + con1
 
@@ -1063,16 +1070,12 @@ func graficarInodos(path string, inicioDD int64) string {
 				contenido = contenido + nuNodo+ ":f5->node"
 				nuNodo2 :=  strconv.Itoa(int(inodoLeido.IApIndirecto))
 				contenido = contenido + nuNodo2 + "[color=\"#196F3D\"];"
-				//hacer el enlace
-				return contenido
 			}
 			return contenido
 		}
-
 		contenido = contenido + "{<f5>0}"
 		contenido = contenido + "}\"];"
 		return contenido
-
 	}
 	return ""
 }
