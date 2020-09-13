@@ -1,20 +1,227 @@
-mkdisk -size->15 -unit->m -path->"/home/archivos/discos" -name->disco4.dsk
-fdisk -fit->bf -sizE->5 -unit->m -type->p -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-mount -path->"/home/archivos/discos/disco4.dsk" -name->pprimaria1
-mount 
-mkfs -id->vda1 -type->full
-mkdir -p -id->vda1 -path->"/directorio1"
-mkdir -p -id->vda1 -path->"/directorio2"
-mkdir -p -id->vda1 -path->"/directorio3"
-mkdir -p -id->vda1 -path->"/directorio4"
-mkdir -p -id->vda1 -path->"/directorio5"
-mkdir -p -id->vda1 -path->"/directorio6"
-mkdir -p -id->vda1 -path->"/directorio7"
-mkfile -p -id->vda1 -path->"/directorio1/archivo2.txt" -size->150 -cont->"Hola mi amor te amo con todo mi corazon eres mi corazoncito te adoro"
-mkfile -p -id->vda1 -path->"archivo2.txt" -size->25 -cont->""Hola"
-rep -nombre->directorio -path->"/home/archivos/reportes/reporteDirec.png" -id->vda1
+Mkdisk -Size->3000 -unit->K -path->"/home/Archivos/discos/" -name->Disco1.dsk
 
-rep -nombre->tree_complete -path->"/home/archivos/reportes/reportetree.png" -id->vda1
+fdisk -Size->200 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->p -fit->FF -name->Particion1
+fdisk -Size->200 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->p -fit->FF -name->Particion2
+fdisk -Size->200 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->p -fit->FF -name->Particion3
+fdisk -Size->200 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->E -fit->FF -name->Particion4
+
+fdisk -Size->75 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->l -fit->FF -name->Particion5
+fdisk -Size->75 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->l -fit->FF -name->Particion6
+fdisk -Size->50 -path->"/home/Archivos/discos/Disco1.dsk" -unit->K -type->l -fit->FF -name->Particion7
+
+mount -path->"/home/Archivos/discos/Disco1.dsk" -name->Particion1
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+
+
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->full -name->Particion6
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+
+
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->full -name->Particion7
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->fast -name->Particion5
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+
+
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->fast -name->Particion2
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+
+
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->fast -name->Particion3
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
+
+fdisk -path->"/home/Archivos/discos/Disco1.dsk" -delete->fast -name->Particion4
+rep -id->vda1 -Path->"/home/Archivos/reportes/MBR.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/Disk.pdf" -name->disk
 pause
 
-#final de archivo
+
+mkfs -id->vda1
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+
+mkdir -id->vda1 -path->"/carpeta1" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+
+mkdir -id->vda1 -path->"/carpeta2" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkdir -id->vda1 -path->"/carpeta3" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkdir -id->vda1 -path->"/carpeta4" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkdir -id->vda1 -path->"/carpeta5" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkdir -id->vda1 -path->"/carpeta6" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkdir -id->vda1 -path->"/carpeta7" -p
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo1.txt" -size->100 -p -cont->"contenido1"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo2.txt" -size->100 -p -cont->"contenido2!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo3.txt" -size->300 -p -cont->"contenido3!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo4.txt" -size->300 -p -cont->"Hola mundo!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo5.txt" -size->300 -p -cont->"Hola mundo!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+pause
+
+mkfile -id->vda1 -path->"/carpeta1/archivo6.txt" -size->300 -p -cont->"Hola mundo!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+mkfile -id->vda1 -path->"/carpetaNueva1/CarpetaNueva2/CarpetaNueva3/carpetaNueva/4/archivo.txt" -size->100 -p -cont->"Hola mundo!!!"
+rep -id->vda1 -Path->"/home/Archivos/reportes/Directorio.pdf" -name->directorio
+rep -id->vda1 -Path->"/home/Archivos/reportes/TreeComplete.pdf" -name->tree_complete
+rep -id->vda1 -Path->"/home/archiVOS/reportes/avd.txt" -name->bm_arbdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/dd.txt" -name->bm_detdir
+rep -id->vda1 -Path->"/home/archiVOS/reportes/inodos.txt" -name->bm_inode
+rep -id->vda1 -Path->"/home/archiVOS/reportes/bloques.txt" -name->bm_block
+rep -id->vda1 -Path->"/home/Archivos/reportes/mbr.pdf" -name->mbr
+rep -id->vda1 -Path->"/home/Archivos/reportes/disk.pdf" -name->disk
+rep -id->vda1 -Path->"/home/Archivos/reportes/sb.pdf" -name->sb
+pause
+
+

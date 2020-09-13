@@ -1002,8 +1002,10 @@ func realizarFormato(path string, inicioParticion int64, tamParticion int64, tip
 			pos = pos + int64(unsafe.Sizeof(bloque{}))
 		}
 	}
+
 	/*Crear la carpeta raiz*/
 	//graficarSB(path, inicioParticion)
+	creacionArchivo(path, inicioParticion, nuevoSB.InicioAV, 300, "users.txt", "1,G,root      \n1,U,root      ,root      ,201314821\n")
 	return 1
 }
 

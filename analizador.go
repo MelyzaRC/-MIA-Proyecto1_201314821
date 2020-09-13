@@ -23,7 +23,7 @@ import (
 	Lee una linea por medio de teclado
 ***************************************************************/
 func obtenerLineaConsola(texto string) {
-	fmt.Print("COMANDO: ")
+	fmt.Print("\nCOMANDO: ")
 	lector := bufio.NewReader(os.Stdin)
 	comando, _ := lector.ReadString('\n')
 	comando = texto + comando
@@ -132,7 +132,8 @@ func analizar(comando string) {
 				fmt.Println("RESULTADO: Opcion incorrecta")
 			}
 		default:
-			fmt.Println("La instruccion " + s[0] + " no se reconoce")
+			fmt.Print("\nATENCION! ")
+			fmt.Println("La instruccion " + s[0] + " no se reconoce\n")
 		}
 	}
 }
@@ -143,11 +144,11 @@ func analizar(comando string) {
 		-	Path
 ***************************************************************/
 func comandoExec(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	fmt.Println("\nEJECUTANDO: " + comando)
 	s := strings.Split(comando, " -")
 	if len(s) == 2 {
 		s2 := strings.Split(s[1], "->")
-		if strings.Compare(strings.ToLower(s2[0]), "path") == 0 {
+		if strings.Compare(s2[0], "path") == 0 {
 			_, err := os.Stat(strings.ReplaceAll(s2[1], "\"", ""))
 			if err == nil {
 				s3 := strings.Split(s2[1], ".")
@@ -267,7 +268,7 @@ func comandoPause(comando string) {
 			-unit
 ***************************************************************/
 func comandoMkdisk(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	fmt.Println("\nEJECUTANDO: " + comando)
 	//Descomponiendo en atributos
 	atributos := strings.Split(comando, " -")
 	//verificando parametros
@@ -282,9 +283,9 @@ func comandoMkdisk(comando string) {
 			case "size":
 				size = atributoSize(atributoActual[1])
 			case "path":
-				path = strings.ReplaceAll(atributoActual[1], "\"", "")
+				path = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(atributoActual[1], "\"", "")))
 			case "name":
-				name = strings.ReplaceAll(atributoActual[1], "\"", "")
+				name = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(atributoActual[1], "\"", "")))
 			case "unit":
 				unit = atributoUnit(atributoActual[1])
 			default:
@@ -370,13 +371,13 @@ func crearDirectorioSiNoExiste(directorio string) {
 		-path
 ***************************************************************/
 func comandoRmdisk(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	fmt.Println("\nEJECUTANDO: " + comando)
 	atributos := strings.Split(comando, " -")
 	if len(atributos) > 1 {
 		atributoActual := strings.Split(atributos[1], "->")
 		if len(atributoActual) > 1 {
 			if strings.Compare(strings.ToLower(atributoActual[0]), "path") == 0 {
-				pathActual := strings.ReplaceAll(atributoActual[1], "\"", "")
+				pathActual := strings.ToLower(strings.TrimSpace(strings.ReplaceAll(atributoActual[1], "\"", "")))
 				/********************/
 				//verificando nombre
 				if strings.Compare(pathActual, "") == 1 {
@@ -419,7 +420,7 @@ func comandoRmdisk(comando string) {
 func comandoFkdisk(comando string) {
 	if strings.Compare(comando, "") == 1 {
 		deleteFlag, addFlag := 0, 0
-		fmt.Println("EJECUTANDO: " + comando)
+		fmt.Println("\nEJECUTANDO: " + comando)
 		//Separa el primer comando general para determinar que accion realizar
 		s := strings.Split(comando, " -")
 		//verificar que hayan atributos
@@ -469,11 +470,12 @@ func fDiskEliminar(comando string) {
 				if len(s1) > 1 {
 					switch strings.ToLower(strings.TrimSpace(s1[0])) {
 					case "delete":
-						tipoEliminacion = atributoDelete(s1[1])
+						tipoEliminacion = atributoDelete(strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))))
+						//tipoEliminacion = "full"
 					case "name":
-						nombreEliminacion = strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))
+						nombreEliminacion = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", "")))
 					case "path":
-						pathOk, pathEliminacion = verificarPath(s1[1])
+						pathOk, pathEliminacion = verificarPath(strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))))
 					default:
 						fmt.Println("RESULTADO: El atributo " + s1[0] + " no se reconoce para el comando DELETE")
 					}
@@ -548,9 +550,9 @@ func fDiskCrear(comando string) {
 						case "size":
 							size = atributoSize(atributo[1])
 						case "path":
-							pathOk, path = verificarPath(atributo[1])
+							pathOk, path = verificarPath(strings.TrimSpace(strings.ToLower(strings.ReplaceAll(atributo[1], "\"", ""))))
 						case "name":
-							name = strings.ToLower(strings.ReplaceAll(atributo[1], "\"", ""))
+							name = strings.TrimSpace(strings.ToLower(strings.ReplaceAll(atributo[1], "\"", "")))
 						case "unit":
 							unit = atributoUnitParticion(atributo[1])
 						case "type":
@@ -639,9 +641,9 @@ func fDiskAdd(comando string) {
 					case "add":
 						tipoAdd, tamAdd = atributoAdd(s1[1])
 					case "name":
-						nombreAdd = strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))
+						nombreAdd = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", "")))
 					case "path":
-						pathOk, pathAdd = verificarPath(s1[1])
+						pathOk, pathAdd = verificarPath(strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s1[1], "\"", ""))))
 					case "unit":
 						unitAdd = atributoUnitParticion(s1[1])
 					default:
@@ -693,7 +695,7 @@ func fDiskAdd(comando string) {
 ***************************************************************/
 func comandoMount(comando string) {
 	if strings.Compare(comando, "") != 0 {
-		fmt.Println("EJECUTANDO: " + comando)
+		fmt.Println("\nEJECUTANDO: " + comando)
 		s := strings.Split(comando, " -")
 		if len(s) == 1 {
 			imprimirMOUNT()
@@ -706,7 +708,7 @@ func comandoMount(comando string) {
 				if len(s2) > 1 {
 					switch strings.ToLower(strings.TrimSpace(s2[0])) {
 					case "path":
-						pathOk, path = verificarPath(s2[1])
+						pathOk, path = verificarPath(strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))))
 					case "name":
 						nombre = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 					default:
@@ -741,7 +743,7 @@ func comandoMount(comando string) {
 ***************************************************************/
 func comandoUnmount(comando string) {
 	if strings.Compare(comando, "") != 0 {
-		fmt.Println("EJECUTANDO: " + comando)
+		fmt.Println("\nEJECUTANDO: " + comando)
 		s := strings.Split(comando, " -")
 		if len(s) > 1 {
 			var listaID []string
@@ -771,11 +773,11 @@ func comandoUnmount(comando string) {
 ***************************************************************/
 func comandoMKFS(comando string) {
 	if strings.Compare(comando, "") != 0 {
-		fmt.Println("EJECUTANDO: " + comando)
+		fmt.Println("\nEJECUTANDO: " + comando)
 		s := strings.Split(comando, " -")
 		addCounter := 0
 		idFormatear := ""
-		tipoFormato := ""
+		tipoFormato := "full"
 		tipoAdd := ""
 		tamAdd := 0
 		unitMkfs := ""
@@ -788,6 +790,7 @@ func comandoMKFS(comando string) {
 						idFormatear = strings.ToLower(strings.TrimSpace(s2[1]))
 					case "type":
 						tipoFormato = atributoTypeFormat(strings.ToLower(strings.TrimSpace(s2[1])))
+						tipoFormato = "full"
 					case "add":
 						addCounter = 1
 						tipoAdd, tamAdd = atributoAdd(strings.ToLower(strings.TrimSpace(s2[1])))
@@ -861,7 +864,7 @@ func mkfsAdd(idParticion string, tamAdd int64, tipoAdd string) {
 		-p crear padres
 ***************************************************************/
 func comandoMKDIR(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	fmt.Println("\nEJECUTANDO: " + comando)
 	if strings.Compare(comando, "") != 0 {
 		s := strings.Split(comando, " -")
 		atribP := 0
@@ -877,7 +880,7 @@ func comandoMKDIR(comando string) {
 					} else if len(s2) > 1 {
 						switch strings.ToLower(strings.TrimSpace(s2[0])) {
 						case "id":
-							atribID = strings.ToLower(strings.TrimSpace(s2[1]))
+							atribID = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 						case "path":
 							atribPath = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 						default:
@@ -911,7 +914,8 @@ func comandoMKDIR(comando string) {
 	COMANDO REP
 ***************************************************************/
 func comandoRep(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	crearDirectorioSiNoExiste("reportes")
+	fmt.Println("\nEJECUTANDO: " + comando)
 	id := ""
 	path := ""
 	ruta := ""
@@ -924,13 +928,15 @@ func comandoRep(comando string) {
 				if len(s2) > 1 {
 					switch strings.ToLower(strings.TrimSpace(s2[0])) {
 					case "path":
-						path = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
+						path = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 					case "id":
-						id = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
+						id = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 					case "ruta":
-						ruta = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
+						ruta = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 					case "nombre":
-						nombre = strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", ""))
+						nombre = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
+					case "name":
+						nombre = strings.ToLower(strings.TrimSpace(strings.ReplaceAll(s2[1], "\"", "")))
 					default:
 						fmt.Println("RESULTADO: No se reconoce el parametro " + s2[0] + " para el comando REP")
 						return
@@ -963,10 +969,13 @@ func comandoRep(comando string) {
 						case "directorio":
 							reporteDIRECTORIO(path, id)
 						case "tree_file":
+							fmt.Println("RESULTADO: Actualmente no se puede crear el reporte")
 						case "tree_directorio":
+							fmt.Println("RESULTADO: Actualmente no se puede crear el reporte")
 						case "tree_complete":
 							reporteCOMPLETE(path, id)
 						case "ls":
+							fmt.Println("RESULTADO: Actualmente no se puede crear el reporte")
 						default:
 							fmt.Println("RESULTADO: No se reconoce el tipo de reporte a realizar")
 							fmt.Println(ruta)
@@ -996,7 +1005,7 @@ func comandoRep(comando string) {
 		-p crear padres
 ***************************************************************/
 func comandoMKFILE(comando string) {
-	fmt.Println("EJECUTANDO: " + comando)
+	fmt.Println("\nEJECUTANDO: " + comando)
 	if strings.Compare(comando, "") != 0 {
 		s := strings.Split(comando, " -")
 		atribP := 0

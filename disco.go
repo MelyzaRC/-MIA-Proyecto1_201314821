@@ -378,8 +378,8 @@ func logicaRecursiva(path string, pos int64, ebrNuevo *ebr, limite int64) int {
 
 						escribirEbr(path, ebrEs.Start, &ebrEs)
 						escribirEbr(path, ebrLeido.Start, &ebrLeido)
-						fmt.Print("EBR Start:")
-						fmt.Println(ebrEs.Start)
+						//fmt.Print("EBR Start:")
+						//fmt.Println(ebrEs.Start)
 						return 1
 					}
 					fmt.Println("RESULTADO: no hay espacio disponible para crear la particion logica en esta particion")
@@ -425,7 +425,7 @@ func escribirEbr(path string, pos int64, ebr *ebr) {
 		file.Seek(pos, 0)
 		//Escribiendo el MBR
 		var binario3 bytes.Buffer
-		binary.Write(&binario3, binary.BigEndian, ebr)
+		binary.Write(&binario3, binary.BigEndian, *ebr)
 		writeNextBytes(file, binario3.Bytes())
 	}
 }
@@ -632,14 +632,16 @@ func eliminarParticion(path string, nombre string, tipo string) {
 						//graficarDISCO(path)
 					}
 					eliminado = 1
+					break
 
 				} else if s.Tabla[i].Type == 'e' {
 					/*Verificar las logicas dentro de la particion extendida*/
 					/*Leyendo logicas***************************************/
-					limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size
+					
+					limite := s.Tabla[i].Start + int64(unsafe.Sizeof(ebr{})) + s.Tabla[i].Size 
 					ebrTemp := ebr{}
 					ebrAnterior := ebr{}
-					ebrAnterior.Start = 0
+					ebrAnterior.Start = s.Tabla[i].Start
 					ebrAnterior.Next = 0
 					file, err := os.Open(strings.ReplaceAll(path, "\"", ""))
 					defer file.Close()
@@ -675,7 +677,7 @@ func eliminarParticion(path string, nombre string, tipo string) {
 											if strings.Compare(tipo, "fast") == 0 {
 												escribirEbr(path, ebrLeido.Start, &ebrVacio)
 											} else if strings.Compare(tipo, "full") == 0 {
-												borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), s.Tabla[i].Size)
+												//borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), s.Tabla[i].Size)
 												escribirEbr(path, ebrLeido.Start, &ebrVacio)
 											}
 										} else {
@@ -683,8 +685,8 @@ func eliminarParticion(path string, nombre string, tipo string) {
 											if strings.Compare(tipo, "fast") == 0 {
 												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
 											} else if strings.Compare(tipo, "full") == 0 {
-												borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
-												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+												//borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
+												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
 											}
 										}
 										eliminado = 1
@@ -698,20 +700,22 @@ func eliminarParticion(path string, nombre string, tipo string) {
 										ebrVacio.Next = ebrLeido.Next
 										ebrVacio.Size = 0
 										ebrVacio.Start = ebrLeido.Start
+
 										if ebrAnterior.Next == 0 {
+											ebrAnterior.Next = ebrLeido.Next
 											if strings.Compare(tipo, "fast") == 0 {
 												escribirEbr(path, ebrLeido.Start, &ebrVacio)
 											} else if strings.Compare(tipo, "full") == 0 {
-												borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), s.Tabla[i].Size)
-												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+												//borrarFullParticion(path, ebrLeido.Start+int64(unsafe.Sizeof(ebr{})), /*s.Tabla[i].Size*/ebrLeido.Start+int64(unsafe.Sizeof(ebr{})) + ebrLeido.Size+1)
+												escribirEbr(path, ebrAnterior.Start, &ebrVacio)
 											}
 										} else {
 											ebrAnterior.Next = ebrLeido.Next
 											if strings.Compare(tipo, "fast") == 0 {
 												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
 											} else if strings.Compare(tipo, "full") == 0 {
-												borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
-												escribirEbr(path, ebrLeido.Start, &ebrVacio)
+												//borrarFullParticion(path, ebrAnterior.Start+int64(unsafe.Sizeof(ebr{})), ebrAnterior.Next-ebrAnterior.Start-ebrAnterior.Size-int64(unsafe.Sizeof(ebr{})))
+												escribirEbr(path, ebrAnterior.Start, &ebrAnterior)
 											}
 										}
 										eliminado = 1

@@ -237,7 +237,7 @@ func graficarMBR(path string, pathDestino string, nombreDestino string, formatoD
 					}
 					limite := particionActual.Start + int64(unsafe.Sizeof(ebr{})) + particionActual.Size
 					if &ebrTemp != nil {
-						if ebrTemp.Size > 0 {
+						if ebrTemp.Size > -1 {
 							for i := ebrTemp.Start; i < limite; i++ {
 								ebrLeido := ebr{}
 								file.Seek(i, 0)
@@ -247,7 +247,7 @@ func graficarMBR(path string, pathDestino string, nombreDestino string, formatoD
 								if err != nil {
 									log.Fatal("binary.Read failed", err)
 								}
-								if &ebrLeido != nil {
+								if ebrLeido.Next != 0 && ebrLeido.Size > 0{
 									//titulo de tabla
 									contenido = contenido + "<TR><TD border=\"0\" bgcolor=\"#F08080\" width=\"250\" cellpadding=\"7\" align=\"left\"><font color=\"#FFFFFF\" face=\"Calibri\"><b>Particion Logica</b></font></TD>\n"
 									contenido = contenido + "<TD border=\"0\" bgcolor=\"#F08080\" width=\"200\" cellpadding=\"7\"></TD></TR>\n"
@@ -297,6 +297,13 @@ func graficarMBR(path string, pathDestino string, nombreDestino string, formatoD
 										//porque al iterar el for le suma uno
 										i = ebrLeido.Next - 1
 									}
+								}else{
+									if ebrLeido.Next == -1{
+										i = limite + 1
+									}else{
+										i = ebrLeido.Next - 1
+									}
+									break
 								}
 
 							}
@@ -686,6 +693,7 @@ func graficarDirectorioGeneral(path string, inicioParticion int64, pathDestino s
 	if err != nil {
 		log.Fatal("binary.Read failed", err)
 	}
+
 	if &sbTemp != nil {
 		if sbTemp.MagicNum == 201314821 {
 			contenido := ""
@@ -784,7 +792,7 @@ func graficaDirectorioRecursiva(path string, inicioactual int64) string {
 			return contenido 
 
 		}
-		return contenido
+		return ""
 	}
 	return ""
 }
